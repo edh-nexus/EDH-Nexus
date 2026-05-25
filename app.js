@@ -18,5 +18,4 @@ playerZones.forEach(zone => {
     currentLife++; // Add 1 to the memory
     lifeTotal.textContent = currentLife; // Update the screen
   });
-  
 });
