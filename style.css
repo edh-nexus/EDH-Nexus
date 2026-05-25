@@ -33,6 +33,65 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+}
+.life-total {
+  font-size: 5rem;
+  font-weight: bold;
+  width: 120px;
+  text-align: center;
+}
+/* Buttons */
+.life-btn {
+  background-color: #FFF;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 2.5rem;
+  width: 60px;
+  height: 80px;
+  cursor: pointer;
+  touch-action: manipulation; /* Makes mobile tapping more responsive */
+}
+/* Flip the top two player zones upside down */
+#player-1, #player-2 {
+  transform: rotate(180deg);
+}
+body {
+  background-color: #000; /* Dark mode is best to save phone battery during long games */
+  color: #FFF;
+  font-family: sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+/* The 2x2 Grid */
+.main-board {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  grid-template-rows: 1fr 1fr;    /* Two equal rows */
+  gap: 10px; /* Space between the players */
+  height: 100vh;
+  padding: 10px;
+}
+/* Player Text */
+.player-info {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+}
+.player-info h3 {
+  font-size: 1.5rem;
+}
+.player-info h5 {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+/* Life Total Section */
+.life-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 90%;
   margin-top: 20px;
 }
