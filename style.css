@@ -16,13 +16,13 @@ body {
 }
 /* Player Text */
 .player-info {
-  position: absolute;
-  top: 15px;
-  text-align: center;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
 }
 .player-info h3 {
   font-size: 1.5rem;
-  margin-bottom: 4px;
 }
 .player-info h5 {
   font-size: 0.9rem;
@@ -45,7 +45,7 @@ body {
 /* Buttons */
 .life-btn {
   background-color: #FFF;
-  color: white;
+  color: #000;
   border: none;
   border-radius: 8px;
   font-size: 2.5rem;
@@ -53,4 +53,8 @@ body {
   height: 80px;
   cursor: pointer;
   touch-action: manipulation; /* Makes mobile tapping more responsive */
+}
+/* Flip the top two player zones upside down */
+#player-1, #player-2 {
+  transform: rotate(180deg);
 }
