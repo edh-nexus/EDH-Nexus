@@ -19,3 +19,9 @@ playerZones.forEach(zone => {
     lifeTotal.textContent = currentLife; // Update the screen
   });
 });
+
+self.addEventListener("install", (event) => {
+});
+
+self.addEventListener("fetch", (event) => {
+});
