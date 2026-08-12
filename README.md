@@ -20,7 +20,8 @@ Android pivot branch so the repository represents one focused product.
 ## Build
 
 The project uses JDK 17, Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin
-2.2.21, compile/target SDK 36, and the stable Compose BOM 2026.06.01.
+2.2.21, AndroidX Core 1.17.0, Activity 1.12.4, compile/target SDK 36, and the
+stable Compose BOM 2026.06.01.
 
 Open the repository in a compatible Android Studio release, or run:
 
@@ -41,4 +42,3 @@ to the same card across different printings.
 
 Magic: The Gathering is owned by Wizards of the Coast. EDH Nexus is an
 independent, unofficial project and is not endorsed by Wizards of the Coast.
-
