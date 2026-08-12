@@ -1,4 +1,10 @@
-/target/
-*.profraw
-*.profdata
+*.iml
+.gradle/
+.idea/
+local.properties
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+app/release/
 
