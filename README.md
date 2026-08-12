@@ -1,44 +1,40 @@
-# EDH Nexus
+# EDH Nexus Deck Synergy
 
-EDH Nexus is a shared-device Android life tracker for Commander/EDH. One phone
-sits at the table and controls life totals for every player.
+An intent-aware Commander deck evaluator. Players provide a commander, a short description of the deck's intended game plan, and a decklist. The app resolves current card data through Scryfall and returns a transparent synergy score with actionable feedback.
 
-## MVP
+## What it measures
 
-- 2–6 players on one landscape game board;
-- 40 starting life with large `-5`, `-1`, `+1`, and `+5` controls;
-- player and commander selection before each game;
-- optional Partner/Background commander selection;
-- commander search backed by Scryfall;
-- explicit winner selection when a game ends;
-- offline SQLite history with commander games, wins, losses, and win rate;
-- no accounts, server, ads, or rules engine.
+- Plan density
+- Commander fit
+- Deck fundamentals
+- Consistency
+- Resilience
 
-The original web prototype and Rust rules-engine experiment were removed on the
-Android pivot branch so the repository represents one focused product.
+The result is an alignment score, not a universal power-level claim. The report explains the evidence behind each category, identifies strengths, and suggests cards or structural changes worth reviewing.
 
-## Build
+## Local development
 
-The project uses JDK 17, Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin
-2.2.21, AndroidX Core 1.17.0, Activity 1.12.4, compile/target SDK 36, and the
-stable Compose BOM 2026.06.01.
+Requires Node.js 22.13 or newer.
 
-Open the repository in a compatible Android Studio release, or run:
-
-```sh
-gradle :app:testDebugUnitTest :app:assembleDebug
+```bash
+npm ci
+npm run dev
 ```
 
-The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`.
+Open the local URL printed by Vite.
 
-## Data and privacy
+## Validation
 
-Completed games and aggregate statistics stay in the app's local SQLite
-database. Commander searches send the entered card name to Scryfall. No player
-names or game results are uploaded.
+```bash
+npm test
+npm run lint
+npm run build
+```
 
-Commander records use Scryfall `oracle_id` values so statistics remain attached
-to the same card across different printings.
+## Data source
 
-Magic: The Gathering is owned by Wizards of the Coast. EDH Nexus is an
-independent, unofficial project and is not endorsed by Wizards of the Coast.
+Card names, types, colors, and Oracle text are retrieved from the public [Scryfall API](https://scryfall.com/docs/api). Magic: The Gathering is property of Wizards of the Coast. This project is unofficial and is not endorsed by Wizards of the Coast or Scryfall.
+
+## Current status
+
+This repository contains the web beta of EDH Nexus Deck Synergy. Analysis currently runs in the browser and does not require an account or persistent deck storage.
