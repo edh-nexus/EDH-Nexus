@@ -47,4 +47,3 @@ mod tests {
         assert_eq!(index.sources_for(EventKind::Draw), &[ObjectId(1)]);
     }
 }
-

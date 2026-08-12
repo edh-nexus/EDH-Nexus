@@ -17,4 +17,3 @@ pub trait CardCatalog {
     fn by_id(&self, id: CardDefinitionId) -> Option<&OracleCard>;
     fn scryfall_snapshot_updated_at(&self) -> &str;
 }
-

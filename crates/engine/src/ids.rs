@@ -9,4 +9,3 @@ id_type!(CardDefinitionId);
 id_type!(ObjectId);
 id_type!(PlayerId);
 id_type!(StackItemId);
-

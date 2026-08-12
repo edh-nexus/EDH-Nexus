@@ -52,9 +52,11 @@ mod tests {
             });
         }
         for expected in (0..100_000).rev() {
-            assert_eq!(stack.resolve_next().expect("item").id, StackItemId(expected));
+            assert_eq!(
+                stack.resolve_next().expect("item").id,
+                StackItemId(expected)
+            );
         }
         assert!(stack.is_empty());
     }
 }
-

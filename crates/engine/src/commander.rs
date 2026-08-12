@@ -58,4 +58,3 @@ mod tests {
         assert!(state.record_combat_damage(PlayerId(1), 1));
     }
 }
-

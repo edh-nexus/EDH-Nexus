@@ -196,14 +196,10 @@ mod tests {
             ManaSource {
                 id: 20,
                 activation_generic: 1,
-                produces: ManaPool::new()
-                    .with(Color::Blue, 1)
-                    .with(Color::Black, 1),
+                produces: ManaPool::new().with(Color::Blue, 1).with(Color::Black, 1),
             },
         ];
-        let cost = ManaCost::new(0)
-            .with(Color::Blue, 1)
-            .with(Color::Black, 1);
+        let cost = ManaCost::new(0).with(Color::Blue, 1).with(Color::Black, 1);
 
         let plan = find_payment(ManaPool::new(), cost, &sources).expect("cost is payable");
         assert_eq!(plan.activation_order, vec![10, 20]);
@@ -226,4 +222,3 @@ mod tests {
         );
     }
 }
-

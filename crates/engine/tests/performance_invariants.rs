@@ -18,4 +18,3 @@ fn token_count_does_not_change_batch_size() {
 
     assert_eq!(std::mem::size_of_val(&one), std::mem::size_of_val(&million));
 }
-

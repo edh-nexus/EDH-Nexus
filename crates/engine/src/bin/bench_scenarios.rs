@@ -35,9 +35,5 @@ fn main() {
     while let Some(item) = stack.resolve_next() {
         black_box(item);
     }
-    println!(
-        "stack_push_resolve,100000,{}",
-        started.elapsed().as_nanos()
-    );
+    println!("stack_push_resolve,100000,{}", started.elapsed().as_nanos());
 }
-
