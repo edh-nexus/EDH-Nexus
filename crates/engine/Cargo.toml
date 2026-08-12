@@ -1,0 +1,18 @@
+[package]
+name = "edh-nexus-engine"
+version = "0.1.0"
+description = "Deterministic, performance-first Commander rules engine"
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "bench-scenarios"
+path = "src/bin/bench_scenarios.rs"
+
+[lints]
+workspace = true
+
