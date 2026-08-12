@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "EDH Nexus Deck Synergy",
   description: "Score how closely your Commander deck supports the game plan you designed it to execute.",
   other: { "codex-preview": "development" },
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  icons: { icon: "./favicon.svg", shortcut: "./favicon.svg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
