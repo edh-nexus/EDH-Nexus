@@ -199,8 +199,8 @@
         const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
 
         // Scryfall Art URLs
-        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=normal`;
-        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=normal` : '';
+        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=art_crop`;
+        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=art_crop` : '';
 
         // Client-side Scryfall Color Fallback
         let colorId = deck.colorIdentity;
