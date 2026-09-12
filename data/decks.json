@@ -1,10 +1,10 @@
 [
   {
     "player": "Chris",
-    "commander1": "Wilson, Refined Grizzly",
-    "commander2": "Dungeon Delver",
-    "colorIdentity": "UG",
-    "theme": "Dungeons"
+    "commander1": "Greensleeves, Maro-Sorcerer",
+    "commander2": "",
+    "colorIdentity": "G",
+    "theme": "Lands"
   },
   {
     "player": "Chris",
@@ -22,6 +22,34 @@
   },
   {
     "player": "Chris",
+    "commander1": "Kenrith, the Returned King",
+    "commander2": "",
+    "colorIdentity": "WUBRG",
+    "theme": "Walls, Gates"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Kutzil, Malamet Exemplar",
+    "commander2": "",
+    "colorIdentity": "WG",
+    "theme": "+1/+1 Counters"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Mogis, God of Slaughter",
+    "commander2": "Dungeon Delver",
+    "colorIdentity": "BR",
+    "theme": "Group Slug"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Sydri, Galvanic Genius",
+    "commander2": "None",
+    "colorIdentity": "",
+    "theme": "Vehicles"
+  },
+  {
+    "player": "Chris",
     "commander1": "Vadrok, Apex of Thunder",
     "commander2": "",
     "colorIdentity": "WUR",
@@ -36,37 +64,16 @@
   },
   {
     "player": "Chris",
+    "commander1": "Wilson, Refined Grizzly",
+    "commander2": "Dungeon Delver",
+    "colorIdentity": "UG",
+    "theme": "Dungeons"
+  },
+  {
+    "player": "Chris",
     "commander1": "Xyris, the Writhing Storm",
     "commander2": "",
     "colorIdentity": "URG",
     "theme": "Snakes"
-  },
-  {
-    "player": "Chris",
-    "commander1": "Kutzil, Malamet Exemplar",
-    "commander2": "",
-    "colorIdentity": "WG",
-    "theme": "+1/+1 Counters"
-  },
-  {
-    "player": "Chris",
-    "commander1": "Greensleeves, Maro-Sorcerer",
-    "commander2": "",
-    "colorIdentity": "G",
-    "theme": "Lands"
-  },
-  {
-    "player": "Chris",
-    "commander1": "Mogis, God of Slaughter",
-    "commander2": "Dungeon Delver",
-    "colorIdentity": "BR",
-    "theme": "Group Slug"
-  },
-  {
-    "player": "Chris",
-    "commander1": "Kenrith, the Returned King",
-    "commander2": "",
-    "colorIdentity": "WUBRG",
-    "theme": "Walls, Gates"
   }
 ]
