@@ -50,20 +50,18 @@
   <header>
     <h1>EDH-NEXUS</h1>
     <div class="controls">
-      <select id="playerSelect" onchange="loadPlayerData()">
+      <select id="playerSelect" onchange="onPlayerChange()">
         <option value="">Select Player...</option>
       </select>
-      <select id="deckSelect" disabled onchange="switchDeckLocally()">
+      <select id="deckSelect" disabled onchange="onDeckChange()">
         <option value="">Select Deck...</option>
       </select>
     </div>
   </header>
 
-  <div id="loading">Select a player to begin...</div>
+  <div id="loading">Loading EDH-Nexus database...</div>
 
   <div id="dashboard" class="dashboard-grid" style="display: none;">
-    
-    <!-- Top Deck / Active Commander Showcase -->
     <div class="card">
       <h4 id="commanderCardHeader" style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">ACTIVE COMMANDER</h4>
       
@@ -81,7 +79,6 @@
       </div>
     </div>
 
-    <!-- Career / Deck Analytics -->
     <div class="card">
       <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">STATISTICS</h4>
       <div class="stats-grid">
@@ -103,10 +100,8 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- Match History Table -->
   <div id="historyCard" class="card" style="margin-top: 20px; display: none;">
     <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">MATCH HISTORY</h4>
     <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -123,154 +118,247 @@
   </div>
 
   <script>
-    // Target Google Apps Script API Endpoint
-    const API_URL = 'https://script.google.com/macros/s/AKfycbx9G-Ma-0Kj4t0JpgRKaLWXHehSOtLA-jgOcW1tR5-Z2iXw_OSc4zfQjcpsq8ItCNVUeA/exec';
+    let rawDecks = [];
+    let rawMatches = [];
+    let playerProcessedDecks = [];
 
-    window.playerDecksCache = [];
+    // Load static JSON files directly from GitHub Pages repository
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const [decksRes, matchesRes] = await Promise.all([
+          fetch('./data/decks.json'),
+          fetch('./data/matches.json')
+        ]);
 
-    // On Page Load: Fetch unique players from Google Sheet API
-    document.addEventListener('DOMContentLoaded', () => {
-      fetch(`${API_URL}?action=getPlayers`)
-        .then(res => res.json())
-        .then(players => {
-          const select = document.getElementById('playerSelect');
-          select.innerHTML = '<option value="">Select Player...</option>';
-          players.forEach(player => {
-            const opt = document.createElement('option');
-            opt.value = player;
-            opt.textContent = player;
-            select.appendChild(opt);
-          });
-        })
-        .catch(err => {
-          document.getElementById('loading').innerText = 'Failed to load players from API.';
-          console.error(err);
-        });
+        rawDecks = await decksRes.json();
+        rawMatches = await matchesRes.json();
+
+        populatePlayerDropdown();
+        document.getElementById('loading').innerText = 'Select a player to begin...';
+      } catch (err) {
+        document.getElementById('loading').innerText = 'Error loading repository JSON files.';
+        console.error(err);
+      }
     });
 
-    // Load Overall Profile & Deck List for Selected Player
-    function loadPlayerData() {
-      const selectedPlayer = document.getElementById('playerSelect').value;
-      if (!selectedPlayer) return;
+    function populatePlayerDropdown() {
+      const select = document.getElementById('playerSelect');
+      select.innerHTML = '<option value="">Select Player...</option>';
+      
+      const uniquePlayers = [...new Set(rawDecks.map(d => d.player))];
+      uniquePlayers.forEach(player => {
+        const opt = document.createElement('option');
+        opt.value = player;
+        opt.textContent = player;
+        select.appendChild(opt);
+      });
+    }
 
+    async function onPlayerChange() {
+      const selectedPlayer = document.getElementById('playerSelect').value;
       const deckSelect = document.getElementById('deckSelect');
       deckSelect.disabled = true;
 
+      if (!selectedPlayer) return;
+
       document.getElementById('loading').style.display = 'block';
-      document.getElementById('loading').innerText = `Loading ${selectedPlayer}'s profile...`;
+      document.getElementById('loading').innerText = `Calculating stats for ${selectedPlayer}...`;
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('historyCard').style.display = 'none';
 
-      fetch(`${API_URL}?action=getTrackerData&player=${encodeURIComponent(selectedPlayer)}`)
-        .then(res => res.json())
-        .then(decks => {
-          window.playerDecksCache = decks || [];
-          deckSelect.innerHTML = '';
+      playerProcessedDecks = await processPlayerData(selectedPlayer);
 
-          if (window.playerDecksCache.length === 0) {
-            deckSelect.innerHTML = '<option value="">No Decks Found</option>';
-            document.getElementById('loading').innerText = 'No data found for this player.';
-            return;
-          }
+      deckSelect.innerHTML = '';
+      playerProcessedDecks.forEach((deck, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = deck.label;
+        deckSelect.appendChild(opt);
+      });
 
-          window.playerDecksCache.forEach((deck, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = deck.label;
-            deckSelect.appendChild(option);
-          });
-
-          deckSelect.disabled = false;
-          switchDeckLocally();
-        })
-        .catch(err => {
-          document.getElementById('loading').innerText = 'Error connecting to API.';
-          console.error(err);
-        });
+      deckSelect.disabled = false;
+      renderDashboard(playerProcessedDecks[0]);
     }
 
-    // Switch view locally without making extra network requests
-    function switchDeckLocally() {
-      const deckIndex = document.getElementById('deckSelect').value;
-      if (deckIndex === '' || !window.playerDecksCache[deckIndex]) return;
-      renderDashboard(window.playerDecksCache[deckIndex]);
-    }
-
-    // Render Dashboard UI
-    function renderDashboard(data) {
-      try {
-        const cardHeader = document.getElementById('commanderCardHeader');
-        const artContainer = document.querySelector('.art-container');
-        const art1 = document.getElementById('commanderArt1');
-        const art2 = document.getElementById('commanderArt2');
-        const nameElem = document.getElementById('commanderName');
-        const themeElem = document.getElementById('commanderTheme');
-
-        if (data.isOverall) {
-          if (cardHeader) cardHeader.innerText = 'TOP DECK';
-          if (nameElem) nameElem.innerText = data.commander1;
-          if (themeElem) themeElem.innerText = data.theme;
-          if (art1) art1.src = data.artUrl1 || 'https://via.placeholder.com/600x350/1e1e24/ffffff?text=No+Games+Logged';
-
-          if (data.commander2 && String(data.commander2).trim() !== "" && data.commander2 !== 'None') {
-            if (art2) { art2.src = data.artUrl2; art2.style.display = 'block'; }
-            if (artContainer) artContainer.classList.add('has-partner');
-          } else {
-            if (art2) art2.style.display = 'none';
-            if (artContainer) artContainer.classList.remove('has-partner');
-          }
-        } else {
-          if (cardHeader) cardHeader.innerText = 'ACTIVE COMMANDER';
-          if (themeElem) themeElem.innerText = data.theme || 'N/A';
-          if (art1) art1.src = data.artUrl1 || 'https://via.placeholder.com/300x180?text=No+Art';
-
-          if (data.commander2 && String(data.commander2).trim() !== "" && data.commander2 !== 'None') {
-            if (art2) { art2.src = data.artUrl2; art2.style.display = 'block'; }
-            if (artContainer) artContainer.classList.add('has-partner');
-            if (nameElem) nameElem.innerText = `${data.commander1} & ${data.commander2}`;
-          } else {
-            if (art2) art2.style.display = 'none';
-            if (artContainer) artContainer.classList.remove('has-partner');
-            if (nameElem) nameElem.innerText = data.commander1 || 'Unknown Commander';
-          }
-        }
-
-        document.getElementById('colorIdentityDisplay').innerText = data.colorIdentity || 'C';
-
-        document.getElementById('totalGames').innerText = data.totalGames ?? 0;
-        document.getElementById('winsLosses').innerText = data.winsLosses ?? '0 / 0';
-        document.getElementById('winRate').innerText = data.winRate ?? '0%';
-        document.getElementById('avgPos').innerText = data.avgPos ?? 'N/A';
-
-        const tbody = document.getElementById('matchHistoryRows');
-        if (tbody) {
-          tbody.innerHTML = '';
-          if (!data.recentMatches || data.recentMatches.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 12px;">No matches recorded yet.</td></tr>';
-          } else {
-            data.recentMatches.forEach(match => {
-              const row = document.createElement('tr');
-              const posClass = match[4] == 1 ? 'badge-win' : 'badge-loss';
-              const posText = match[4] == 1 ? '1st 🏆' : `${match[4]}th`;
-
-              row.innerHTML = `
-                <td style="padding: 8px; font-weight: bold;">${match[3]}</td>
-                <td style="padding: 8px;" class="${posClass}">${posText}</td>
-                <td style="padding: 8px; color: var(--text-muted);">${match[5]}</td>
-                <td style="padding: 8px; color: var(--text-muted);">${match[6]}</td>
-              `;
-              tbody.appendChild(row);
-            });
-          }
-        }
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'grid';
-        document.getElementById('historyCard').style.display = 'block';
-
-      } catch (err) {
-        console.error("Dashboard Render Error:", err);
+    function onDeckChange() {
+      const index = document.getElementById('deckSelect').value;
+      if (index !== '' && playerProcessedDecks[index]) {
+        renderDashboard(playerProcessedDecks[index]);
       }
+    }
+
+    async function processPlayerData(playerName) {
+      const targetPlayer = playerName.toLowerCase();
+      const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
+      const playerMatches = rawMatches.filter(m => m.player.toLowerCase() === targetPlayer);
+
+      const processed = await Promise.all(playerDecks.map(async deck => {
+        const c1 = deck.commander1 ? deck.commander1.trim() : '';
+        const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
+        const hasPartner = c2 !== '';
+        const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
+
+        // Scryfall Art URLs
+        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=normal`;
+        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=normal` : '';
+
+        // Client-side Scryfall Color Fallback
+        let colorId = deck.colorIdentity;
+        if (!colorId || colorId === 'C' || colorId.startsWith('#')) {
+          colorId = await fetchClientColorIdentity(c1, c2);
+        }
+
+        // Match filtering
+        const deckMatches = playerMatches.filter(m => {
+          const logged = m.commander.toLowerCase().trim();
+          return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
+        });
+
+        const totalGames = deckMatches.length;
+        const wins = deckMatches.filter(m => Number(m.position) === 1).length;
+        const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+        
+        let posSum = 0;
+        deckMatches.forEach(m => posSum += Number(m.position || 0));
+
+        return {
+          commander1: c1,
+          commander2: c2,
+          label: combinedLabel,
+          artUrl1: art1,
+          artUrl2: art2,
+          colorIdentity: colorId,
+          theme: deck.theme || 'N/A',
+          totalGames: totalGames,
+          wins: wins,
+          winRateNum: winRateNum,
+          winsLosses: `${wins} / ${totalGames - wins}`,
+          winRate: winRateNum.toFixed(1) + '%',
+          avgPos: totalGames > 0 ? (posSum / totalGames).toFixed(1) : 'N/A',
+          recentMatches: deckMatches.slice(-5).reverse()
+        };
+      }));
+
+      // Sort by Win Rate
+      processed.sort((a, b) => b.winRateNum - a.winRateNum);
+      const topDeck = processed.length > 0 && processed[0].totalGames > 0 ? processed[0] : null;
+
+      // Career Profile
+      const overallGames = playerMatches.length;
+      const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
+      let overallPosSum = 0;
+      playerMatches.forEach(m => overallPosSum += Number(m.position || 0));
+
+      const overallProfile = {
+        isOverall: true,
+        commander1: topDeck ? topDeck.commander1 : `${playerName}'s Career`,
+        commander2: topDeck ? topDeck.commander2 : '',
+        label: '🌟 Overall Player Profile',
+        artUrl1: topDeck ? topDeck.artUrl1 : 'https://via.placeholder.com/600x350/1e1e24/ffffff?text=No+Games',
+        artUrl2: topDeck ? topDeck.artUrl2 : '',
+        colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG',
+        theme: topDeck ? `Top Deck (${topDeck.winRate} WR)` : `${processed.length} Decks`,
+        totalGames: overallGames,
+        winsLosses: `${overallWins} / ${overallGames - overallWins}`,
+        winRate: overallGames > 0 ? ((overallWins / overallGames) * 100).toFixed(1) + '%' : '0%',
+        avgPos: overallGames > 0 ? (overallPosSum / overallGames).toFixed(1) : 'N/A',
+        recentMatches: playerMatches.slice(-5).reverse()
+      };
+
+      return [overallProfile, ...processed];
+    }
+
+    function renderDashboard(data) {
+      const cardHeader = document.getElementById('commanderCardHeader');
+      const artContainer = document.querySelector('.art-container');
+      const art1 = document.getElementById('commanderArt1');
+      const art2 = document.getElementById('commanderArt2');
+      const nameElem = document.getElementById('commanderName');
+      const themeElem = document.getElementById('commanderTheme');
+
+      if (data.isOverall) {
+        cardHeader.innerText = 'TOP DECK';
+        nameElem.innerText = data.commander1;
+        themeElem.innerText = data.theme;
+        art1.src = data.artUrl1;
+
+        if (data.commander2) {
+          art2.src = data.artUrl2;
+          art2.style.display = 'block';
+          artContainer.classList.add('has-partner');
+        } else {
+          art2.style.display = 'none';
+          artContainer.classList.remove('has-partner');
+        }
+      } else {
+        cardHeader.innerText = 'ACTIVE COMMANDER';
+        themeElem.innerText = data.theme;
+        art1.src = data.artUrl1;
+
+        if (data.commander2) {
+          art2.src = data.artUrl2;
+          art2.style.display = 'block';
+          artContainer.classList.add('has-partner');
+          nameElem.innerText = `${data.commander1} & ${data.commander2}`;
+        } else {
+          art2.style.display = 'none';
+          artContainer.classList.remove('has-partner');
+          nameElem.innerText = data.commander1;
+        }
+      }
+
+      document.getElementById('colorIdentityDisplay').innerText = data.colorIdentity;
+      document.getElementById('totalGames').innerText = data.totalGames;
+      document.getElementById('winsLosses').innerText = data.winsLosses;
+      document.getElementById('winRate').innerText = data.winRate;
+      document.getElementById('avgPos').innerText = data.avgPos;
+
+      const tbody = document.getElementById('matchHistoryRows');
+      tbody.innerHTML = '';
+      if (!data.recentMatches || data.recentMatches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 12px;">No matches recorded yet.</td></tr>';
+      } else {
+        data.recentMatches.forEach(m => {
+          const row = document.createElement('tr');
+          const posClass = m.position == 1 ? 'badge-win' : 'badge-loss';
+          const posText = m.position == 1 ? '1st 🏆' : `${m.position}th`;
+
+          row.innerHTML = `
+            <td style="padding: 8px; font-weight: bold;">${m.commander}</td>
+            <td style="padding: 8px;" class="${posClass}">${posText}</td>
+            <td style="padding: 8px; color: var(--text-muted);">${m.turns || 'N/A'}</td>
+            <td style="padding: 8px; color: var(--text-muted);">${m.notes || ''}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'grid';
+      document.getElementById('historyCard').style.display = 'block';
+    }
+
+    async function fetchClientColorIdentity(c1, c2) {
+      const getColors = async (name) => {
+        if (!name || name.toLowerCase() === 'none') return [];
+        try {
+          const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
+          if (!res.ok) return [];
+          const data = await res.json();
+          return data.color_identity || [];
+        } catch (e) {
+          return [];
+        }
+      };
+
+      const colors1 = await getColors(c1);
+      const colors2 = (c2 && c2.toLowerCase() !== 'none') ? await getColors(c2) : [];
+      const combined = [...new Set([...colors1, ...colors2])];
+      if (combined.length === 0) return 'C';
+
+      const order = { 'W': 1, 'U': 2, 'B': 3, 'R': 4, 'G': 5 };
+      combined.sort((a, b) => (order[a] || 99) - (order[b] || 99));
+      return combined.join('');
     }
   </script>
 </body>
