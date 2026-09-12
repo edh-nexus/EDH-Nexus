@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EDH-Nexus</title>
+  <title>EDH Nexus</title>
   <style>
     :root {
       --bg-color: #0f1117;
@@ -48,7 +48,7 @@
 <body>
 
   <header>
-    <h1>EDH-NEXUS</h1>
+    <h1>EDH Nexus</h1>
     <div class="controls">
       <select id="playerSelect" onchange="onPlayerChange()">
         <option value="">Select Player...</option>
@@ -59,7 +59,7 @@
     </div>
   </header>
 
-  <div id="loading">Loading EDH-Nexus database...</div>
+  <div id="loading">Loading EDH Nexus database...</div>
 
   <div id="dashboard" class="dashboard-grid" style="display: none;">
     <div class="card">
@@ -190,7 +190,11 @@
     async function processPlayerData(playerName) {
       const targetPlayer = playerName.toLowerCase();
       const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
-      const playerMatches = rawMatches.filter(m => m.player.toLowerCase() === targetPlayer);
+
+      // Extract all games where this player participated inside the players array
+      const playerMatches = rawMatches.filter(m => 
+        m.players && m.players.some(p => p.player.toLowerCase() === targetPlayer)
+      );
 
       const processed = await Promise.all(playerDecks.map(async deck => {
         const c1 = deck.commander1 ? deck.commander1.trim() : '';
@@ -198,28 +202,35 @@
         const hasPartner = c2 !== '';
         const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
 
-        // Scryfall Art URLs
-        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=art_crop`;
-        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=art_crop` : '';
+        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=normal`;
+        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=normal` : '';
 
-        // Client-side Scryfall Color Fallback
         let colorId = deck.colorIdentity;
         if (!colorId || colorId === 'C' || colorId.startsWith('#')) {
           colorId = await fetchClientColorIdentity(c1, c2);
         }
 
-        // Match filtering
+        // Filter matches where this specific deck was played by this player
         const deckMatches = playerMatches.filter(m => {
-          const logged = m.commander.toLowerCase().trim();
+          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
+          if (!pData) return false;
+          const logged = pData.commander.toLowerCase().trim();
           return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
         });
 
         const totalGames = deckMatches.length;
-        const wins = deckMatches.filter(m => Number(m.position) === 1).length;
+        const wins = deckMatches.filter(m => {
+          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
+          return Number(pData.position) === 1;
+        }).length;
+
         const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
         
         let posSum = 0;
-        deckMatches.forEach(m => posSum += Number(m.position || 0));
+        deckMatches.forEach(m => {
+          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
+          posSum += Number(pData.position || 0);
+        });
 
         return {
           commander1: c1,
@@ -239,15 +250,25 @@
         };
       }));
 
-      // Sort by Win Rate
-      processed.sort((a, b) => b.winRateNum - a.winRateNum);
-      const topDeck = processed.length > 0 && processed[0].totalGames > 0 ? processed[0] : null;
+      // Sort by Most Played
+      const sortedByGames = [...processed].sort((a, b) => {
+        if (b.totalGames === a.totalGames) return b.winRateNum - a.winRateNum;
+        return b.totalGames - a.totalGames;
+      });
 
-      // Career Profile
+      const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : null;
+
       const overallGames = playerMatches.length;
-      const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
+      const overallWins = playerMatches.filter(m => {
+        const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
+        return Number(pData.position) === 1;
+      }).length;
+
       let overallPosSum = 0;
-      playerMatches.forEach(m => overallPosSum += Number(m.position || 0));
+      playerMatches.forEach(m => {
+        const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
+        overallPosSum += Number(pData.position || 0);
+      });
 
       const overallProfile = {
         isOverall: true,
@@ -257,7 +278,7 @@
         artUrl1: topDeck ? topDeck.artUrl1 : 'https://via.placeholder.com/600x350/1e1e24/ffffff?text=No+Games',
         artUrl2: topDeck ? topDeck.artUrl2 : '',
         colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG',
-        theme: topDeck ? `Top Deck (${topDeck.winRate} WR)` : `${processed.length} Decks`,
+        theme: topDeck ? `Most Played Deck (${topDeck.totalGames} Games)` : `${processed.length} Decks`,
         totalGames: overallGames,
         winsLosses: `${overallWins} / ${overallGames - overallWins}`,
         winRate: overallGames > 0 ? ((overallWins / overallGames) * 100).toFixed(1) + '%' : '0%',
