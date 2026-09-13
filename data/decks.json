@@ -75,5 +75,12 @@
     "commander2": "",
     "colorIdentity": "URG",
     "theme": "Snakes"
+  },
+  {
+    "player": "Zack",
+    "commander1": "Captain America, Team Leader",
+    "commander2": "None",
+    "colorIdentity": "",
+    "theme": "N/A"
   }
 ]
