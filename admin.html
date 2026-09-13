@@ -169,22 +169,24 @@
     }
 
     function populatePlayerDropdowns() {
-      const playerSelect = document.getElementById('matchPlayer');
-      playerSelect.innerHTML = '<option value="">Select Player...</option>';
       const players = [...new Set(rawDecks.map(d => d.player))].sort();
       
-      players.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        playerSelect.appendChild(opt);
-      });
+      for (let i = 1; i <= 4; i++) {
+        const select = document.getElementById(`p${i}_user`);
+        select.innerHTML = `<option value="">Select Player ${i}...</option>`;
+        players.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          select.appendChild(opt);
+        });
+      }
     }
 
-    function updateMatchCommanderDropdown() {
-      const selectedPlayer = document.getElementById('matchPlayer').value;
-      const cmdSelect = document.getElementById('matchCommander');
-      cmdSelect.innerHTML = '<option value="">Select Commander...</option>';
+    function updatePodCommanderDropdown(slotNum) {
+      const selectedPlayer = document.getElementById(`p${slotNum}_user`).value;
+      const cmdSelect = document.getElementById(`p${slotNum}_deck`);
+      cmdSelect.innerHTML = '<option value="">Select Deck...</option>';
       if (!selectedPlayer) return;
 
       const playerDecks = rawDecks.filter(d => d.player === selectedPlayer);
@@ -244,24 +246,33 @@
       e.preventDefault();
       const status = document.getElementById('matchStatus');
       status.style.color = 'var(--text-muted)';
-      status.innerText = 'Committing match to GitHub...';
+      status.innerText = 'Committing pod match to GitHub...';
 
       try {
+        const podPlayers = [];
+        for (let i = 1; i <= 4; i++) {
+          const pName = document.getElementById(`p${i}_user`).value;
+          const pDeck = document.getElementById(`p${i}_deck`).value;
+          if (pName && pDeck) {
+            podPlayers.push({
+              player: pName,
+              commander: pDeck,
+              position: i
+            });
+          }
+        }
+
         const newMatch = {
           gameId: `GAME_${Date.now()}`,
           date: new Date().toISOString().split('T')[0],
-          player: document.getElementById('matchPlayer').value,
-          commander: document.getElementById('matchCommander').value,
-          position: Number(document.getElementById('matchPosition').value),
-          turns: Number(document.getElementById('matchTurns').value || 0),
-          notes: document.getElementById('matchNotes').value.trim()
+          players: podPlayers
         };
 
         rawMatches.push(newMatch);
-        await commitFileToGitHub('data/matches.json', rawMatches, `Log match: ${newMatch.player} (${newMatch.commander})`);
+        await commitFileToGitHub('data/matches.json', rawMatches, `Log pod match (${newMatch.date})`);
         
         status.style.color = 'var(--success)';
-        status.innerText = 'Match successfully logged and committed!';
+        status.innerText = 'Pod match committed successfully!';
         document.getElementById('matchForm').reset();
       } catch (err) {
         status.style.color = 'var(--error)';
