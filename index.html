@@ -188,99 +188,95 @@
     }
 
     async function processPlayerData(playerName) {
-      const targetPlayer = playerName.toLowerCase();
-      const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
+  const targetPlayer = playerName.toLowerCase();
+  const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
 
-      // Extract all matches where this player participated
-      const playerMatches = rawMatches.map(m => {
-        const entry = m.players ? m.players.find(p => p.player.toLowerCase() === targetPlayer) : null;
-        if (!entry) return null;
-        return {
-          gameId: m.gameId,
-          date: m.date,
-          commander: entry.commander,
-          position: entry.position,
-          pod: m.players
-        };
-      }).filter(m => m !== null);
+  // Extract matches where player participated
+  const playerMatches = rawMatches.map(m => {
+    const entry = m.players ? m.players.find(p => p.player.toLowerCase() === targetPlayer) : null;
+    if (!entry) return null;
+    return {
+      gameId: m.gameId,
+      date: m.date,
+      commander: entry.commander,
+      position: entry.position,
+      pod: m.players
+    };
+  }).filter(m => m !== null);
 
-      const processed = await Promise.all(playerDecks.map(async deck => {
-        const c1 = deck.commander1 ? deck.commander1.trim() : '';
-        const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
-        const hasPartner = c2 !== '';
-        const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
+  const processed = playerDecks.map(deck => {
+    const c1 = deck.commander1 ? deck.commander1.trim() : '';
+    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
+    const hasPartner = c2 !== '';
+    const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
 
-        const art1 = await fetchScryfallArtUrl(c1);
-const art2 = hasPartner ? await fetchScryfallArtUrl(c2) : '';
+    // Use cached CDN image URLs directly from decks.json with fallback placeholders
+    const art1 = deck.artUrl1 || `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=art`;
+    const art2 = deck.artUrl2 || (hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=art` : '');
 
-        let colorId = deck.colorIdentity;
-        if (!colorId || colorId === 'C' || colorId.startsWith('#')) {
-          colorId = await fetchClientColorIdentity(c1, c2);
-        }
+    const deckMatches = playerMatches.filter(m => {
+      const logged = m.commander.toLowerCase().trim();
+      return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
+    });
 
-        const deckMatches = playerMatches.filter(m => {
-          const logged = m.commander.toLowerCase().trim();
-          return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
-        });
+    const totalGames = deckMatches.length;
+    const wins = deckMatches.filter(m => Number(m.position) === 1).length;
+    const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
 
-        const totalGames = deckMatches.length;
-        const wins = deckMatches.filter(m => Number(m.position) === 1).length;
-        const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-        
-        let posSum = 0;
-        deckMatches.forEach(m => posSum += Number(m.position || 0));
+    let posSum = 0;
+    deckMatches.forEach(m => posSum += Number(m.position || 0));
 
-        return {
-          commander1: c1,
-          commander2: c2,
-          label: combinedLabel,
-          artUrl1: art1,
-          artUrl2: art2,
-          colorIdentity: colorId,
-          theme: deck.theme || 'N/A',
-          totalGames: totalGames,
-          wins: wins,
-          winRateNum: winRateNum,
-          winsLosses: `${wins} / ${totalGames - wins}`,
-          winRate: winRateNum.toFixed(1) + '%',
-          avgPos: totalGames > 0 ? (posSum / totalGames).toFixed(1) : 'N/A',
-          recentMatches: deckMatches.slice(-5).reverse()
-        };
-      }));
+    return {
+      commander1: c1,
+      commander2: c2,
+      label: combinedLabel,
+      artUrl1: art1,
+      artUrl2: art2,
+      colorIdentity: deck.colorIdentity || 'C',
+      theme: deck.theme || 'N/A',
+      totalGames: totalGames,
+      wins: wins,
+      winRateNum: winRateNum,
+      winsLosses: `${wins} / ${totalGames - wins}`,
+      winRate: winRateNum.toFixed(1) + '%',
+      avgPos: totalGames > 0 ? (posSum / totalGames).toFixed(1) : 'N/A',
+      recentMatches: deckMatches.slice(-5).reverse()
+    };
+  });
 
-      // Sort by Most Games Played (Top Deck)
-      const sortedByGames = [...processed].sort((a, b) => {
-        if (b.totalGames === a.totalGames) {
-          return b.winRateNum - a.winRateNum;
-        }
-        return b.totalGames - a.totalGames;
-      });
-
-      const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : null;
-
-      const overallGames = playerMatches.length;
-      const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
-      let overallPosSum = 0;
-      playerMatches.forEach(m => overallPosSum += Number(m.position || 0));
-
-      const overallProfile = {
-        isOverall: true,
-        commander1: topDeck ? topDeck.commander1 : `${playerName}'s Career`,
-        commander2: topDeck ? topDeck.commander2 : '',
-        label: '🌟 Overall Player Profile',
-        artUrl1: topDeck ? topDeck.artUrl1 : 'https://via.placeholder.com/600x350/1e1e24/ffffff?text=No+Games',
-        artUrl2: topDeck ? topDeck.artUrl2 : '',
-        colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG',
-        theme: topDeck ? `Most Played Deck (${topDeck.totalGames} Games)` : `${processed.length} Decks`,
-        totalGames: overallGames,
-        winsLosses: `${overallWins} / ${overallGames - overallWins}`,
-        winRate: overallGames > 0 ? ((overallWins / overallGames) * 100).toFixed(1) + '%' : '0%',
-        avgPos: overallGames > 0 ? (overallPosSum / overallGames).toFixed(1) : 'N/A',
-        recentMatches: playerMatches.slice(-5).reverse()
-      };
-
-      return [overallProfile, ...processed];
+  // Sort by Most Played Deck
+  const sortedByGames = [...processed].sort((a, b) => {
+    if (b.totalGames === a.totalGames) {
+      return b.winRateNum - a.winRateNum;
     }
+    return b.totalGames - a.totalGames;
+  });
+
+  const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : null;
+
+  const overallGames = playerMatches.length;
+  const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
+  let overallPosSum = 0;
+  playerMatches.forEach(m => overallPosSum += Number(m.position || 0));
+
+  const overallProfile = {
+    isOverall: true,
+    commander1: topDeck ? topDeck.commander1 : `${playerName}'s Career`,
+    commander2: topDeck ? topDeck.commander2 : '',
+    label: 'Overall Player Profile',
+    artUrl1: topDeck ? topDeck.artUrl1 : 'https://via.placeholder.com/600x350/1e1e24/ffffff?text=No+Games',
+    artUrl2: topDeck ? topDeck.artUrl2 : '',
+    colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG',
+    theme: topDeck ? `Most Played Deck (${topDeck.totalGames} Games)` : `${processed.length} Decks`,
+    totalGames: overallGames,
+    winsLosses: `${overallWins} / ${overallGames - overallWins}`,
+    winRate: overallGames > 0 ? ((overallWins / overallGames) * 100).toFixed(1) + '%' : '0%',
+    avgPos: overallGames > 0 ? (overallPosSum / overallGames).toFixed(1) : 'N/A',
+    recentMatches: playerMatches.slice(-5).reverse()
+  };
+
+  return [overallProfile, ...processed];
+}
 
     function renderDashboard(data) {
       const cardHeader = document.getElementById('commanderCardHeader');
