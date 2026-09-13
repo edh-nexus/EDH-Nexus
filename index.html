@@ -107,10 +107,10 @@
     <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
       <thead>
         <tr style="text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
+          <th style="padding: 8px;">Date</th>
           <th style="padding: 8px;">Commander</th>
-          <th style="padding: 8px;">Result</th>
-          <th style="padding: 8px;">Turns</th>
-          <th style="padding: 8px;">Notes</th>
+          <th style="padding: 8px;">Finish</th>
+          <th style="padding: 8px;">Opponents & Decks</th>
         </tr>
       </thead>
       <tbody id="matchHistoryRows"></tbody>
@@ -191,10 +191,18 @@
       const targetPlayer = playerName.toLowerCase();
       const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
 
-      // Extract all games where this player participated inside the players array
-      const playerMatches = rawMatches.filter(m => 
-        m.players && m.players.some(p => p.player.toLowerCase() === targetPlayer)
-      );
+      // Extract all matches where this player participated
+      const playerMatches = rawMatches.map(m => {
+        const entry = m.players ? m.players.find(p => p.player.toLowerCase() === targetPlayer) : null;
+        if (!entry) return null;
+        return {
+          gameId: m.gameId,
+          date: m.date,
+          commander: entry.commander,
+          position: entry.position,
+          pod: m.players
+        };
+      }).filter(m => m !== null);
 
       const processed = await Promise.all(playerDecks.map(async deck => {
         const c1 = deck.commander1 ? deck.commander1.trim() : '';
@@ -210,27 +218,17 @@
           colorId = await fetchClientColorIdentity(c1, c2);
         }
 
-        // Filter matches where this specific deck was played by this player
         const deckMatches = playerMatches.filter(m => {
-          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
-          if (!pData) return false;
-          const logged = pData.commander.toLowerCase().trim();
+          const logged = m.commander.toLowerCase().trim();
           return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
         });
 
         const totalGames = deckMatches.length;
-        const wins = deckMatches.filter(m => {
-          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
-          return Number(pData.position) === 1;
-        }).length;
-
+        const wins = deckMatches.filter(m => Number(m.position) === 1).length;
         const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
         
         let posSum = 0;
-        deckMatches.forEach(m => {
-          const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
-          posSum += Number(pData.position || 0);
-        });
+        deckMatches.forEach(m => posSum += Number(m.position || 0));
 
         return {
           commander1: c1,
@@ -250,25 +248,20 @@
         };
       }));
 
-      // Sort by Most Played
+      // Sort by Most Games Played (Top Deck)
       const sortedByGames = [...processed].sort((a, b) => {
-        if (b.totalGames === a.totalGames) return b.winRateNum - a.winRateNum;
+        if (b.totalGames === a.totalGames) {
+          return b.winRateNum - a.winRateNum;
+        }
         return b.totalGames - a.totalGames;
       });
 
       const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : null;
 
       const overallGames = playerMatches.length;
-      const overallWins = playerMatches.filter(m => {
-        const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
-        return Number(pData.position) === 1;
-      }).length;
-
+      const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
       let overallPosSum = 0;
-      playerMatches.forEach(m => {
-        const pData = m.players.find(p => p.player.toLowerCase() === targetPlayer);
-        overallPosSum += Number(pData.position || 0);
-      });
+      playerMatches.forEach(m => overallPosSum += Number(m.position || 0));
 
       const overallProfile = {
         isOverall: true,
@@ -298,7 +291,7 @@
       const themeElem = document.getElementById('commanderTheme');
 
       if (data.isOverall) {
-        cardHeader.innerText = 'TOP DECK';
+        cardHeader.innerText = 'MOST PLAYED COMMANDER';
         nameElem.innerText = data.commander1;
         themeElem.innerText = data.theme;
         art1.src = data.artUrl1;
@@ -344,11 +337,18 @@
           const posClass = m.position == 1 ? 'badge-win' : 'badge-loss';
           const posText = m.position == 1 ? '1st 🏆' : `${m.position}th`;
 
+          // Format opponents in the pod
+          const activePlayerName = document.getElementById('playerSelect').value.toLowerCase();
+          const opponentsHTML = m.pod
+            .filter(p => p.player.toLowerCase() !== activePlayerName)
+            .map(p => `<span style="display:inline-block; margin-right: 10px; font-size: 0.85rem;"><strong>${p.position}th:</strong> ${p.player} (<em>${p.commander}</em>)</span>`)
+            .join(' ');
+
           row.innerHTML = `
+            <td style="padding: 8px; color: var(--text-muted); font-size: 0.85rem;">${m.date || 'N/A'}</td>
             <td style="padding: 8px; font-weight: bold;">${m.commander}</td>
             <td style="padding: 8px;" class="${posClass}">${posText}</td>
-            <td style="padding: 8px; color: var(--text-muted);">${m.turns || 'N/A'}</td>
-            <td style="padding: 8px; color: var(--text-muted);">${m.notes || ''}</td>
+            <td style="padding: 8px; color: var(--text-main);">${opponentsHTML}</td>
           `;
           tbody.appendChild(row);
         });
