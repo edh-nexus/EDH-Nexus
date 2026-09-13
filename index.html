@@ -354,53 +354,6 @@
       document.getElementById('dashboard').style.display = 'grid';
       document.getElementById('historyCard').style.display = 'block';
     }
-
-    async function fetchClientColorIdentity(c1, c2) {
-      const getColors = async (name) => {
-        if (!name || name.toLowerCase() === 'none') return [];
-        try {
-          const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
-          if (!res.ok) return [];
-          const data = await res.json();
-          return data.color_identity || [];
-        } catch (e) {
-          return [];
-        }
-      };
-
-      const colors1 = await getColors(c1);
-      const colors2 = (c2 && c2.toLowerCase() !== 'none') ? await getColors(c2) : [];
-      const combined = [...new Set([...colors1, ...colors2])];
-      if (combined.length === 0) return 'C';
-
-      const order = { 'W': 1, 'U': 2, 'B': 3, 'R': 4, 'G': 5 };
-      combined.sort((a, b) => (order[a] || 99) - (order[b] || 99));
-      return combined.join('');
-    }
-    async function fetchScryfallArtUrl(cardName) {
-  if (!cardName || cardName.toLowerCase() === 'none') return '';
-
-  try {
-    const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`);
-    if (!res.ok) throw new Error('Card not found');
-    const data = await res.json();
-
-    // 1. Handle single-faced cards
-    if (data.image_uris) {
-      return data.image_uris.art || data.image_uris.art_crop;
-    }
-
-    // 2. Handle double-faced / Modal cards (e.g., Esika, God of the Tree)
-    if (data.card_faces && data.card_faces[0].image_uris) {
-      return data.card_faces[0].image_uris.art || data.card_faces[0].image_uris.art_crop;
-    }
-
-    return 'https://via.placeholder.com/626x457/1e1e24/ffffff?text=No+Art';
-  } catch (err) {
-    console.error(`Error fetching art for ${cardName}:`, err);
-    return 'https://via.placeholder.com/626x457/1e1e24/ffffff?text=Art+Error';
-  }
-}
   </script>
 </body>
 </html>
