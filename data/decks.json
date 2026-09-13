@@ -96,5 +96,14 @@
     "commander2": "None",
     "colorIdentity": "",
     "theme": "N/A"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Neyith of the Dire Hunt",
+    "commander2": "None",
+    "theme": "N/A",
+    "colorIdentity": "RG",
+    "artUrl1": "https://cards.scryfall.io/art/front/0/c/0c1eed0f-9692-44c0-b1ad-afa691165d52.webp?1783930499",
+    "artUrl2": ""
   }
 ]
