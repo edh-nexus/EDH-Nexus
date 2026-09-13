@@ -337,27 +337,40 @@
         const player = document.getElementById('deckPlayer').value.trim();
         const theme = document.getElementById('deckTheme').value.trim() || 'N/A';
 
-        // Add new deck entry
-        rawDecks.push({
+        const meta1 = await resolveCommanderMetadata(c1);
+        const meta2 = await resolveCommanderMetadata(c2);
+
+        const combinedColors = [...new Set([...meta1.colorIdentity, ...meta2.colorIdentity])];
+        const colorOrder = ['W', 'U', 'B', 'R', 'G'];
+        const sortedColors = combinedColors.sort((a, b) => colorOrder.indexOf(a) - colorOrder.indexOf(b)).join('');
+
+        const newDeck = {
           player: player,
           commander1: c1,
-          commander2: c2,
-          colorIdentity: '',
-          theme: theme
-        });
+          commander2: c2 || 'None',
+          theme: theme || 'N/A',
+          colorIdentity: sortedColors || 'C',
+          artUrl1: meta1.artUrl,
+          artUrl2: meta2.artUrl
+    };
+    const existingIdx = rawDecks.findIndex(d => 
+      d.player.toLowerCase() === player.toLowerCase() && 
+      d.commander1.toLowerCase() === c1.toLowerCase()
+    );
+    if (existingIdx >= 0) {
+      rawDecks[existingIdx] = newDeck;
+    } else {
+      rawDecks.push(newDeck);
+    }
+    await commitFileToGitHub('data/decks.json', rawDecks, `Add/Update deck for ${player}: ${c1}`);
 
-        // Alphabetize roster (by Player, then Commander1)
-        rawDecks = sortDecksAlphabetically(rawDecks);
-
-        await commitFileToGitHub('data/decks.json', rawDecks, `Add deck: ${c1} for ${player}`);
-
-        status.style.color = 'var(--success)';
-        status.innerText = 'Deck added and roster alphabetized!';
-        document.getElementById('deckForm').reset();
-        await loadCurrentData();
-      } catch (err) {
-        status.style.color = 'var(--error)';
-        status.innerText = err.message;
+    status.style.color = 'var(--success)';
+    status.innerText = 'Deck committed successfully with cached CDN assets!';
+    document.getElementById('deckForm').reset();
+    populatePlayerDropdowns();
+  } catch (err) {
+    status.style.color = 'var(--error)';
+    status.innerText = err.message;
       }
     }
 
@@ -386,6 +399,35 @@
         return a.commander1.toLowerCase().localeCompare(b.commander1.toLowerCase());
       });
     }
+
+    // Fetches the exact CDN art URL and color identity for a commander
+async function resolveCommanderMetadata(commanderName) {
+  if (!commanderName || commanderName.trim() === '' || commanderName.toLowerCase() === 'none') {
+    return { artUrl: '', colorIdentity: [] };
+  }
+
+  try {
+    const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(commanderName.trim())}`);
+    if (!res.ok) throw new Error(`Card '${commanderName}' not found on Scryfall`);
+    const data = await res.json();
+
+    // Handle single-faced vs. double-faced cards
+    let art = '';
+    if (data.image_uris) {
+      art = data.image_uris.art || data.image_uris.art_crop || data.image_uris.normal;
+    } else if (data.card_faces && data.card_faces[0].image_uris) {
+      art = data.card_faces[0].image_uris.art || data.card_faces[0].image_uris.art_crop || data.card_faces[0].image_uris.normal;
+    }
+
+    return {
+      artUrl: art,
+      colorIdentity: data.color_identity || []
+    };
+  } catch (err) {
+    console.warn(`Could not fetch metadata for ${commanderName}:`, err);
+    return { artUrl: '', colorIdentity: [] };
+  }
+}
   </script>
 </body>
 </html>
