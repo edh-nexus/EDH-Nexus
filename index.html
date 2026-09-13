@@ -210,8 +210,8 @@
         const hasPartner = c2 !== '';
         const combinedLabel = hasPartner ? `${c1} & ${c2}` : c1;
 
-        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=normal`;
-        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=normal` : '';
+        const art1 = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c1)}&format=image&version=art_crop`;
+        const art2 = hasPartner ? `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(c2)}&format=image&version=art_crop` : '';
 
         let colorId = deck.colorIdentity;
         if (!colorId || colorId === 'C' || colorId.startsWith('#')) {
