@@ -1,0 +1,28 @@
+[
+  {
+    "gameId": "GAME_0000000000001",
+    "date": "2026-09-12",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Wilson, Refined Grizzly & Dungeon Delver",
+        "position": 1
+      },
+      {
+        "player": "Alex",
+        "commander": "Atraxa, Praetors' Voice",
+        "position": 2
+      },
+      {
+        "player": "Sam",
+        "commander": "Krenko, Mob Boss",
+        "position": 3
+      },
+      {
+        "player": "Jordan",
+        "commander": "The Ur-Dragon",
+        "position": 4
+      }
+    ]
+  }
+]
