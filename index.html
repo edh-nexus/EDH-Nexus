@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EDH Nexus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+  <script src="code.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>EDH Nexus</h1>
+    <div class="controls"><button id="backToPlayersBtn" class="btn" style="display: none;"
+        onclick="showPlayerSelection()"> &larr; Back to Players </button> <button id="selectDeckBtn"
+        class="btn btn-primary" style="display: none;" onclick="openDeckModal()"> Select Deck </button></div>
+  </header>
+  <div id="loading">Loading EDH Nexus database...</div>
+  <!-- PLAYER SELECTION VIEW -->
+  <div id="playerSelectionView" style="display: none;">
+    <div class="view-title">Select a Player</div>
+    <div id="playerGrid" class="player-grid"></div>
+  </div>
+  <!-- DASHBOARD DISPLAY -->
+  <div id="dashboard" class="dashboard-grid" style="display: none;">
+    <div class="card">
+      <h4 id="commanderCardHeader"
+        style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">ACTIVE
+        COMMANDER</h4>
+      <div id="artContainer" class="art-container" onclick="togglePartnerStack()"><img id="commanderArt1"
+          class="single-art" alt="Commander Art 1" onerror="this.onerror=null; this.src=svgPlaceholder;"> <img
+          id="commanderArt2" class="stacked-card partner-c2" alt="Commander Art 2" style="display: none;"
+          onerror="this.onerror=null; this.src=svgPlaceholder;"></div>
+      <div style="display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 15px;">
+        <div id="colorIdentityDisplay"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">
+        STATISTICS</h4>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">TOTAL GAMES</div>
+          <div id="totalGames" class="stat-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">RECORD (W / L)</div>
+          <div id="winsLosses" class="stat-val">0 / 0</div>
+        </div>
+        <div class="stat-box">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">WIN RATE</div>
+          <div id="winRate" class="stat-val" style="color: var(--win-color);">0%</div>
+        </div>
+        <div class="stat-box">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">AVG POSITION</div>
+          <div id="avgPos" class="stat-val">N/A</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="historyCard" class="card" style="margin-top: 20px; display: none;">
+    <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">MATCH
+      HISTORY</h4>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      <thead>
+        <tr
+          style="text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
+          <th style="padding: 8px;">Date</th>
+          <th style="padding: 8px;">Commander</th>
+          <th style="padding: 8px;">Finish</th>
+          <th style="padding: 8px;">Opponents &amp; Decks</th>
+        </tr>
+      </thead>
+      <tbody id="matchHistoryRows"></tbody>
+    </table>
+  </div>
+  <!-- DECK SELECTOR MODAL -->
+  <div id="deckModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Select Deck</h3>
+        <button class="close-btn" onclick="closeDeckModal()">&times;</button>
+      </div>
+      <div class="modal-body"><input type="text" id="deckSearchInput" class="search-bar" placeholder="Search Decks"
+          oninput="filterDeckGrid()">
+        <div id="deckGrid" class="deck-grid"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
