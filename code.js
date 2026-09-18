@@ -1,8 +1,51 @@
-const JSONBIN_API_KEY = '$2a$10$VrJ8Yi5va0LKaGST.Q2Qo.imsbD2yoJsqHqL/5Zz1hffMQNcw.6HK';
-const DECKS_BIN_ID = '6aaacb99ffd5d160530ef029';
-const MATCHES_BIN_ID = '6aaacbacac6210605ad55e3e';
-const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // auto-refresh data at most once every 4 hours
+/* ============================================================================
+   EDH NEXUS - all data lives in your GitHub repo and is served by GitHub Pages.
+   There are no accounts, no API keys and no request quotas anywhere in this file.
+
+   The dashboard only ever READS, so it needs no credentials at all, and reading
+   never creates a commit.
+
+   ONE-TIME SETUP
+     1. Create data/decks.json and data/matches.json in the repo (each one is a
+        JSON array). admin.html can write them for you - see its "GitHub
+        Storage" card - or you can paste the JSON in by hand.
+     2. Enable GitHub Pages for the repo (Settings -> Pages -> your branch).
+     3. Point GITHUB_DATA_BASE below at the published data folder.
+     4. Share index.html. That is the whole deployment.
+
+   admin.html is the only page that can write, and only if you hand it a
+   fine-grained GitHub token (Contents: Read and write). That token is stored in
+   the browser and is never written into these files. Without a token admin.html
+   still works - it hands you the JSON to paste into GitHub's web editor.
+   ============================================================================ */
+
+// Your published data folder, including the trailing slash. Example:
+//   https://chris.github.io/edh-nexus/data/
+const GITHUB_DATA_BASE = 'https://YOUR-USER.github.io/YOUR-REPO/data/';
+
+// How often a device re-checks for new data. The data URLs rotate on this same
+// interval, so a copy older than this can never be handed back by a CDN cache.
+const DATA_REFRESH_MS = 5 * 60 * 1000;
+
+// Re-checks while a tab stays open and visible, and the shortest gap allowed between checks.
+const REVALIDATE_POLL_MS = 5 * 60 * 1000;
+const REVALIDATE_MIN_INTERVAL_MS = 60 * 1000;
+
+// Local cache lives until the published data actually changes - it is never expired by age.
+const CACHE_KEY_DECKS = 'edh_decks';
+const CACHE_KEY_MATCHES = 'edh_matches';
+const CACHE_KEY_FINGERPRINT = 'edh_data_fingerprint';
 const LAST_FETCH_KEY = 'edh_last_fetch';
+const MIN_GAMES_FOR_RANKING = 3; // minimum games played to qualify for the "best average finish" awards
+
+// Fallback artwork used whenever a commander has no stored Scryfall image.
+const svgPlaceholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 880">' +
+  '<rect width="630" height="880" fill="#171a21"/>' +
+  '<rect x="24" y="24" width="582" height="832" rx="28" fill="none" stroke="#282d3b" stroke-width="4"/>' +
+  '<text x="315" y="455" font-family="sans-serif" font-size="40" fill="#94a3b8" text-anchor="middle">EDH Nexus</text>' +
+  '</svg>'
+);
 
 const MANA_SVGS = {
   'W': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" version="1.1"><circle cx="300" cy="300" r="300" fill="#fffbd5"/><path d="m586.2 342.4c-39.4-22.2-64.6-33.3-75.7-33.3-8.1 0-14.4 6.2-18.9 18.6-4.5 12.4-13.6 18.5-27.2 18.5-5.6 0-16.9-2-34.1-6-9.6 14.6-14.4 24-14.4 28 0 5.6 4.1 12.1 12.4 19.7 8.3 7.6 15.2 11.3 20.9 11.3 3.6 0 8.5-0.7 14.7-2.3 6.2-1.5 10.3-2.3 12.4-2.3 6.2 0 9.3 11.4 9.3 34.1 0 21.7-5 55-15.1 99.9-13.1-51.5-27-77.2-41.6-77.2-2 0-6.2 1.5-12.5 4.6-6.3 3-11 4.5-14 4.5-14.6 0-27.7-13.4-39.4-40.1-23.2 3.5-34.8 15.4-34.8 35.6 0 10.1 4.7 18.2 14 24.2 9.3 6.1 14 10.4 14 12.9 0 13.6-19.9 34.6-59.8 62.8-21.2 15.1-35.8 25.7-43.9 31.8 7-9.1 14.1-20.9 21.2-35.6 8.1-16.6 12.1-29.5 12.1-38.6 0-5-5.8-12.1-17.4-21.2-11.6-9.1-17.4-18.7-17.4-28.8 0-8.6 3-19.2 9.1-31.8-6.6-7.6-14.4-11.4-23.5-11.4-20.2 0-30.3 6.6-30.3 19.7 0-9.1 0-2.3 0 20.4 0.5 16.7-12.1 25-37.9 25-19.7 0-52.7-4.6-99.2-13.6 52.5-13.1 78.7-28.3 78.7-45.4 0 2-1-4-3-18.2-2-15.6 9.1-29.8 33.3-42.4-4.5-23.2-16.6-34.8-36.3-34.8-3 0-8.6 5.3-16.6 15.9-8.1 10.6-15.6 15.9-22.7 15.9-12.1 0-27.8-13.1-46.9-39.4-9.1-13.1-23-32.5-41.6-58.3 11.6 6.1 23.2 12.1 34.8 18.2 15.1 7.1 27.3 10.6 36.3 10.6 7.1 0 14-6.2 20.8-18.6 6.8-12.4 15.8-18.6 26.9-18.6 1.5 0 11.6 3 30.3 9.1 9.6-14.6 14.4-25.5 14.4-32.6 0-6.1-3.7-13-11-20.8-7.3-7.8-14-11.7-20.1-11.7-2.5 0-6.4 0.8-11.7 2.3-5.3 1.5-9.2 2.3-11.7 2.3-9.1 0-13.6-11.4-13.6-34.1 0-6.1 5.8-40.6 17.4-103.7-0.5 7.6 2.8 21.7 9.8 42.4 8.6 25.2 18.7 37.9 30.3 37.9 2 0 6.1-1.5 12.1-4.5 6.1-3 10.8-4.5 14.4-4.5 11.6 0 21.2 6.6 28.8 19.7l11.4 20.4c10.6 0 19.4-3.8 26.5-11.3 7.1-7.6 10.6-16.7 10.6-27.3 0-11.1-4.7-19.6-14-25.4-9.4-5.8-14-10.2-14-13.2 0-10.6 16.7-28.5 50-53.7 26.7-20.2 44.2-32 52.2-35.6-21.7 29.3-32.6 50.7-32.6 64.3 0 7.1 4.3 14.6 12.9 22.7 10.6 9.6 16.7 16.4 18.2 20.4 5 11.6 4.5 27.5-1.5 47.7 13.6 9.6 24 14.4 31 14.4 14.6 0 21.9-7.6 21.9-22.7 0-1.5-0.6-6.3-1.9-14.4-1.3-8.1-1.6-12.6-1.1-13.6 2-7.1 15.9-10.6 41.6-10.6 16.2 0 49.7 4.5 100.7 13.6-11.1 3-27.8 7.6-50 13.6-20.2 6.1-30.3 12.9-30.3 20.4 0 3.5 1.3 9.6 3.8 18.2 2.5 8.6 3.8 14.9 3.8 18.9 0 7.1-4.5 13.6-13.6 19.7l-25.7 18.2c6.1 11.1 10.1 17.7 12.1 19.7 5 6.1 11.9 9.1 20.4 9.1 6.1 0 11.6-5.3 16.7-15.9 5-10.6 13.1-15.9 24.2-15.9 13.6 0 29 12.6 46.2 37.9 9.6 14.2 24.5 35.6 44.6 64.4m-168-43.9c0-32.3-11.9-60.3-35.6-84-23.7-23.7-51.7-35.6-84-35.6-32.8 0-61.1 11.7-84.8 35.2-23.7 23.5-35.8 51.6-36.3 84.4-0.5 32.3 11.5 60.2 36 83.6 24.5 23.5 52.9 35.2 85.2 35.2 34.3 0 63-11.2 85.9-33.7 23-22.4 34.2-50.8 33.7-85.1m-11.4 0c0 30.8-10.3 56.3-31 76.4-20.7 20.2-46.4 30.3-77.2 30.3-29.8 0-55.3-10.3-76.4-31-21.2-20.7-31.8-45.9-31.8-75.7 0-29.3 10.7-54.4 32.2-75.3 21.5-20.9 46.8-31.4 76.1-31.4 29.3 0 54.6 10.6 76.1 31.8 21.4 21.2 32.2 46.2 32.2 74.9" fill="#211d15"/></svg>',
@@ -43,77 +86,320 @@ let playerProcessedDecks = [];
 let selectedDeckIndex = 0;
 let activePlayerName = '';
 let autoRefreshTimer = null;
+let activeTab = 'players';
+let playerLeaderboardSort = 'wins';
+let deckLeaderboardSort = 'wins';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  registerSyncListeners();
   await loadDatabase();
 });
 
-async function loadDatabase(forceFetch = false) {
-  const loadingEl = document.getElementById('loading');
-  loadingEl.style.display = 'block';
-  loadingEl.innerText = 'Loading EDH Nexus database...';
+/* ============================================================================
+   DATA SYNC
+   The copy cached in localStorage is rendered immediately, then verified in the
+   background. The cache (and the DOM) are rewritten only when the cloud copy has
+   actually changed, so an unchanged league costs nothing but the check itself.
+   ============================================================================ */
 
-  const cachedDecks = localStorage.getItem('edh_decks');
-  const cachedMatches = localStorage.getItem('edh_matches');
-  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
-  const cacheIsFresh = (Date.now() - lastFetch) < CACHE_TTL_MS;
+let revalidateInFlight = false;
+let lastRevalidateAt = 0;
+let storageSyncTimer = null;
 
-  if (!forceFetch && cachedDecks && cachedMatches && cacheIsFresh) {
-    try {
-      rawDecks = JSON.parse(cachedDecks);
-      rawMatches = JSON.parse(cachedMatches);
-      showPlayerSelection();
-      scheduleAutoRefresh();
-      return;
-    } catch (e) {
-      console.warn('Failed to parse cached local data, fetching fresh...', e);
-    }
+// FNV-1a 32 bit - fast, stable, and plenty for "did the content change?" checks.
+function hashString(str) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
   }
+  return (hash >>> 0).toString(16);
+}
+
+// Changing this shape? admin.html mirrors this function so both pages agree on a fingerprint.
+function dataFingerprint(decks, matches) {
+  return hashString(JSON.stringify(decks)) + '.' + hashString(JSON.stringify(matches));
+}
+
+function readCache() {
+  const cachedDecks = localStorage.getItem(CACHE_KEY_DECKS);
+  const cachedMatches = localStorage.getItem(CACHE_KEY_MATCHES);
+  if (!cachedDecks || !cachedMatches) return null;
 
   try {
-    const [decksRes, matchesRes] = await Promise.all([
-      fetch(`https://api.jsonbin.io/v3/b/${DECKS_BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': JSONBIN_API_KEY }
-      }),
-      fetch(`https://api.jsonbin.io/v3/b/${MATCHES_BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': JSONBIN_API_KEY }
-      })
-    ]);
-
-    const decksData = await decksRes.json();
-    const matchesData = await matchesRes.json();
-
-    rawDecks = decksData.record || [];
-    rawMatches = matchesData.record || [];
-
-    localStorage.setItem('edh_decks', JSON.stringify(rawDecks));
-    localStorage.setItem('edh_matches', JSON.stringify(rawMatches));
-    localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
-
-    showPlayerSelection();
-    scheduleAutoRefresh();
-  } catch (err) {
-    loadingEl.innerText = 'Error loading JSONBin database.';
-    console.error(err);
+    return {
+      decks: JSON.parse(cachedDecks),
+      matches: JSON.parse(cachedMatches)
+    };
+  } catch (e) {
+    console.warn('Failed to parse cached local data, fetching fresh...', e);
+    return null;
   }
 }
 
-// Keeps the dashboard's data current automatically:
-// re-checks (and re-fetches if needed) once every 4 hours while the page stays open.
+function writeCache(decks, matches) {
+  rawDecks = decks;
+  rawMatches = matches;
+
+  localStorage.setItem(CACHE_KEY_DECKS, JSON.stringify(decks));
+  localStorage.setItem(CACHE_KEY_MATCHES, JSON.stringify(matches));
+  localStorage.setItem(CACHE_KEY_FINGERPRINT, dataFingerprint(decks, matches));
+  localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
+}
+
+/* --- GitHub Pages data source --- */
+
+// The rotating ?t= value changes on every DATA_REFRESH_MS boundary. GitHub Pages caches files
+// at its edge for 10 minutes, so changing the query value guarantees we are handed the current
+// file rather than a cached copy - and it needs no API call, no token and no quota.
+function dataFileUrl(fileName) {
+  const bucket = Math.floor(Date.now() / DATA_REFRESH_MS);
+  return `${GITHUB_DATA_BASE}${fileName}?t=${bucket}`;
+}
+
+async function fetchDatabaseFiles() {
+  const [decksRes, matchesRes] = await Promise.all([
+    fetch(dataFileUrl('decks.json'), { cache: 'no-cache' }),
+    fetch(dataFileUrl('matches.json'), { cache: 'no-cache' })
+  ]);
+
+  if (!decksRes.ok || !matchesRes.ok) throw new Error('Could not fetch the published data files.');
+
+  const decks = await decksRes.json();
+  const matches = await matchesRes.json();
+
+  return {
+    decks: Array.isArray(decks) ? decks : [],
+    matches: Array.isArray(matches) ? matches : []
+  };
+}
+
+async function loadDatabase(forceRefresh = false) {
+  const loadingEl = document.getElementById('loading');
+  const cached = forceRefresh ? null : readCache();
+
+  if (forceRefresh) setSyncStatus('Checking...');
+
+  // Cached data paints instantly; whether it is still current is verified in the background.
+  if (cached) {
+    loadingEl.style.display = 'none';
+    rawDecks = cached.decks;
+    rawMatches = cached.matches;
+    refreshActiveView();
+    updateSyncStatus();
+    scheduleAutoRefresh();
+    revalidateInBackground(true);
+    return true;
+  }
+
+  loadingEl.style.display = 'block';
+  loadingEl.innerText = 'Loading EDH Nexus database...';
+
+  try {
+    // Stamp first, then data: storing a revision that is older than the copy we hold is safe
+    // (worst case one extra check later), storing a newer one could hide a change.
+    const remoteRevision = await fetchRemoteRevision();
+    const data = await fetchDatabaseFromCloud(remoteRevision);
+    writeCache(data.decks, data.matches);
+
+    if (remoteRevision !== null) localStorage.setItem(REMOTE_REVISION_KEY, remoteRevision);
+
+    reapplyActiveView();
+    updateSyncStatus();
+    scheduleAutoRefresh();
+    return true;
+  } catch (err) {
+    console.error(err);
+    if (rawDecks.length > 0 || rawMatches.length > 0) {
+      setSyncStatus('Offline - showing cached data', true);
+    } else {
+      loadingEl.innerText = 'Error loading EDH Nexus data.';
+    }
+    return false;
+  }
+}
+
+// Re-checks the cloud periodically, but only while the tab is open and visible, so a parked
+// device or a background tab never spends data on polling.
 function scheduleAutoRefresh() {
-  if (autoRefreshTimer) clearTimeout(autoRefreshTimer);
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(() => revalidateInBackground(), REVALIDATE_POLL_MS);
+}
 
-  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
-  const elapsed = Date.now() - lastFetch;
-  const msUntilNextRefresh = Math.max(CACHE_TTL_MS - elapsed, 0);
+// The most useful moment to check for changes is right when someone looks at the app again.
+function registerSyncListeners() {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) revalidateInBackground();
+  });
 
-  autoRefreshTimer = setTimeout(() => {
-    loadDatabase(true).then(() => {
-      if (activePlayerName) {
-        selectPlayer(activePlayerName);
-      }
+  window.addEventListener('focus', () => revalidateInBackground());
+
+  // Another tab on this device (the admin portal) has just saved: pick it up with no network.
+  // Debounced so the burst of cache writes is read once, and only when fully written.
+  window.addEventListener('storage', event => {
+    if (event.key !== CACHE_KEY_DECKS && event.key !== CACHE_KEY_MATCHES) return;
+
+    if (storageSyncTimer) clearTimeout(storageSyncTimer);
+    storageSyncTimer = setTimeout(() => {
+      const cached = readCache();
+      if (!cached) return;
+      rawDecks = cached.decks;
+      rawMatches = cached.matches;
+      reapplyActiveView();
+      updateSyncStatus();
+    }, 50);
+  });
+}
+
+// Reads the optional revision stamp bin. Returns null when it is not configured or unreadable.
+async function fetchRemoteRevision() {
+  if (DATA_SOURCE === 'github') return fetchGitHubRevision();
+  if (!SYNC_BIN_ID) return null;
+
+  try {
+    const res = await cloudFetch(`https://api.jsonbin.io/v3/b/${SYNC_BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY },
+      cache: 'no-store'
     });
-  }, msUntilNextRefresh);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const revision = data.record ? data.record.revision : null;
+    return revision === undefined || revision === null ? null : String(revision);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Checks the cloud and refreshes the cache + screen ONLY when something actually changed.
+// Returns true when fresh data was applied.
+async function revalidateInBackground(skipThrottle = false, manual = false) {
+  if (revalidateInFlight) return false;
+  if (document.hidden) return false;
+
+  // Quota guard: automatic checks stop once this device has spent its daily allowance.
+  if (!manual && budgetExhausted()) {
+    setSyncStatus('Daily check limit reached');
+    return false;
+  }
+
+  const now = Date.now();
+  if (!skipThrottle && (now - lastRevalidateAt) < REVALIDATE_MIN_INTERVAL_MS) return false;
+
+  revalidateInFlight = true;
+  lastRevalidateAt = now;
+
+  try {
+    const remoteRevision = await fetchRemoteRevision();
+
+    // An unchanged revision means nothing was written anywhere, so the datasets (and, on
+    // GitHub, the JSON files) are not requested at all.
+    if (remoteRevision !== null && remoteRevision === localStorage.getItem(REMOTE_REVISION_KEY)) {
+      setSyncStatus('Up to date');
+      return false;
+    }
+
+    setSyncStatus('Checking...');
+    const data = await fetchDatabaseFromCloud(remoteRevision);
+    const freshFingerprint = dataFingerprint(data.decks, data.matches);
+
+    if (remoteRevision !== null) localStorage.setItem(REMOTE_REVISION_KEY, remoteRevision);
+
+    // Identical content: keep the cache and the rendered screen exactly as they are.
+    if (freshFingerprint === (localStorage.getItem(CACHE_KEY_FINGERPRINT) || '')) {
+      setSyncStatus('Up to date');
+      return false;
+    }
+
+    writeCache(data.decks, data.matches);
+    reapplyActiveView();
+    updateSyncStatus();
+    return true;
+  } catch (err) {
+    console.error('Background sync failed:', err);
+    setSyncStatus('Offline - showing cached data', true);
+    return false;
+  } finally {
+    revalidateInFlight = false;
+  }
+}
+
+// Re-renders the current screen while keeping the user's place (same tab/player/deck).
+function reapplyActiveView() {
+  if (activeTab === 'leaderboard') {
+    renderLeaderboard();
+    return;
+  }
+
+  if (!activePlayerName) {
+    showPlayerSelection();
+    return;
+  }
+
+  const previousDeck = playerProcessedDecks[selectedDeckIndex];
+  const previousLabel = previousDeck && !previousDeck.isOverall ? previousDeck.label : '';
+
+  playerProcessedDecks = processPlayerData(activePlayerName);
+
+  let restoredIndex = 0;
+  if (previousLabel) {
+    const matchIndex = playerProcessedDecks.findIndex(d => !d.isOverall && d.label === previousLabel);
+    if (matchIndex > -1) restoredIndex = matchIndex;
+  }
+
+  selectedDeckIndex = restoredIndex;
+  renderDashboard(playerProcessedDecks[restoredIndex]);
+}
+
+/* --- sync status chip --- */
+
+function formatRelativeTime(timestamp) {
+  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+  if (seconds < 45) return 'just now';
+
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return minutes + ' min ago';
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
+
+  const days = Math.round(hours / 24);
+  return days + (days === 1 ? ' day ago' : ' days ago');
+}
+
+function syncTooltip() {
+  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
+  const lastChange = lastFetch ? 'Last new data: ' + formatRelativeTime(lastFetch) + '. ' : '';
+  const budget = DATA_SOURCE === 'jsonbin'
+    ? requestsUsedToday() + ' of ' + DAILY_REQUEST_BUDGET + ' daily requests used on this device. '
+    : 'Reading from GitHub - nothing counts against the JSONBin quota. ';
+  return lastChange + budget + 'Click to check now.';
+}
+
+function setSyncStatus(text, isError = false) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.innerText = text;
+  el.classList.toggle('error', !!isError);
+  el.title = syncTooltip();
+}
+
+function updateSyncStatus() {
+  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
+  if (!lastFetch) {
+    setSyncStatus('Not synced');
+    return;
+  }
+  setSyncStatus('Updated ' + formatRelativeTime(lastFetch));
+}
+
+// Manual check, triggered by clicking the status chip. A deliberate click ignores both the
+// throttle and the daily budget, but it still counts against the quota.
+async function forceRefresh() {
+  lastRevalidateAt = 0;
+  const changed = await revalidateInBackground(true, true);
+  if (!changed) setSyncStatus(budgetExhausted() ? 'Up to date (daily limit reached)' : 'Up to date');
+  return changed;
 }
 
 function showPlayerSelection() {
@@ -123,6 +409,7 @@ function showPlayerSelection() {
   document.getElementById('historyCard').style.display = 'none';
   document.getElementById('backToPlayersBtn').style.display = 'none';
   document.getElementById('selectDeckBtn').style.display = 'none';
+  document.getElementById('leaderboardView').style.display = 'none';
 
   const selectionView = document.getElementById('playerSelectionView');
   const playerGrid = document.getElementById('playerGrid');
@@ -147,8 +434,7 @@ function showPlayerSelection() {
     const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) + '%' : '0.0%';
 
     // Extract Scryfall art_crop URL
-    let rawArt = topDeck ? (topDeck.artUrl1 || svgPlaceholder) : svgPlaceholder;
-    let artCropUrl = rawArt.replace('/grid/', '/art/').replace('/normal/', '/art/').replace('/large/', '/art/');
+    const artCropUrl = toArtCrop(topDeck ? (topDeck.artUrl1 || svgPlaceholder) : svgPlaceholder);
 
     const commanderTitle = topDeck ? topDeck.commander1 : 'No Deck Selected';
     const manaIconsHTML = topDeck ? renderManaSymbols(topDeck.colorIdentity) : '';
@@ -188,7 +474,10 @@ function showPlayerSelection() {
 
 function selectPlayer(playerName) {
   activePlayerName = playerName;
+  activeTab = 'players';
+  updateTabButtons();
   document.getElementById('playerSelectionView').style.display = 'none';
+  document.getElementById('leaderboardView').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
   document.getElementById('loading').innerText = `Calculating stats for ${playerName}...`;
 
@@ -435,7 +724,7 @@ function renderDashboard(data) {
     data.recentMatches.forEach(m => {
       const row = document.createElement('tr');
       const posClass = m.position == 1 ? 'badge-win' : 'badge-loss';
-      const posText = m.position == 1 ? '1st 🏆' : `${m.position}th`;
+      const posText = m.position == 1 ? '1st' : `${m.position}th`;
 
       const opponentsHTML = m.pod
         .filter(p => p.player.toLowerCase() !== targetPlayer)
@@ -462,4 +751,462 @@ window.onclick = function (event) {
   if (event.target === modal) {
     closeDeckModal();
   }
+}
+
+/* ============================================================================
+   TAB NAVIGATION (Players <-> Leaderboard)
+   ============================================================================ */
+
+function updateTabButtons() {
+  const playersBtn = document.getElementById('tabBtnPlayers');
+  const leaderboardBtn = document.getElementById('tabBtnLeaderboard');
+  if (playersBtn) playersBtn.classList.toggle('active', activeTab === 'players');
+  if (leaderboardBtn) leaderboardBtn.classList.toggle('active', activeTab === 'leaderboard');
+}
+
+// Re-renders whichever tab is currently on screen (used after data loads/refreshes).
+function refreshActiveView() {
+  if (activeTab === 'leaderboard') {
+    renderLeaderboard();
+  } else {
+    showPlayerSelection();
+  }
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  updateTabButtons();
+
+  if (tab === 'leaderboard') {
+    document.getElementById('playerSelectionView').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('historyCard').style.display = 'none';
+    document.getElementById('backToPlayersBtn').style.display = 'none';
+    document.getElementById('selectDeckBtn').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
+    renderLeaderboard();
+    document.getElementById('leaderboardView').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  document.getElementById('leaderboardView').style.display = 'none';
+  showPlayerSelection();
+}
+
+function setLeaderboardSort(target, sortKey) {
+  if (target === 'player') {
+    playerLeaderboardSort = sortKey;
+  } else {
+    deckLeaderboardSort = sortKey;
+  }
+
+  const container = document.getElementById(target === 'player' ? 'playerSortControls' : 'deckSortControls');
+  if (container) {
+    Array.from(container.querySelectorAll('.sort-btn')).forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.sort === sortKey);
+    });
+  }
+
+  renderLeaderboard();
+}
+
+// Clicking a leaderboard row jumps straight into that player's dashboard.
+function openPlayerFromLeaderboard(playerName) {
+  activeTab = 'players';
+  updateTabButtons();
+  selectPlayer(playerName);
+}
+
+// Clicking a deck row opens the owning player's dashboard with that deck selected.
+function openDeckFromLeaderboard(playerName, deckLabel) {
+  activeTab = 'players';
+  updateTabButtons();
+  selectPlayer(playerName);
+
+  const idx = playerProcessedDecks.findIndex(d =>
+    !d.isOverall && d.label.toLowerCase() === String(deckLabel).toLowerCase()
+  );
+
+  if (idx > -1) {
+    selectedDeckIndex = idx;
+    renderDashboard(playerProcessedDecks[idx]);
+  }
+}
+
+/* ============================================================================
+   LEADERBOARD STATS
+   Aggregated from the very same rawDecks / rawMatches data the dashboard uses.
+   ============================================================================ */
+
+function toArtCrop(url) {
+  if (!url || typeof url !== 'string') return '';
+  return url.replace('/grid/', '/art/').replace('/normal/', '/art/').replace('/large/', '/art/');
+}
+
+function escapeHTML(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Makes a value safe to drop inside single quotes in an inline onclick attribute.
+function toJsString(value) {
+  const raw = String(value === undefined || value === null ? '' : value);
+  return escapeHTML(raw.replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+}
+
+function buildLeaderboardStats() {
+  const playerMap = new Map();
+  const deckList = [];
+  const deckLookup = new Map();
+
+  // 1) Seed the deck standings with every registered deck so artwork/colours are available.
+  rawDecks.forEach(deck => {
+    const c1 = (deck.commander1 || deck.commander || '').trim();
+    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
+    const label = (deck.label || (c2 ? `${c1} & ${c2}` : c1)).trim();
+    const playerKey = (deck.player || '').toLowerCase();
+
+    const entry = {
+      player: deck.player,
+      playerKey: playerKey,
+      commander1: c1,
+      commander2: c2,
+      label: label,
+      colorIdentity: deck.colorIdentity || 'C',
+      artUrl1: getArtUrl(deck, 'artUrl1', ['artUrl', 'image', 'art_url', 'scryfallCrop', 'commanderArt1']),
+      artUrl2: c2 ? getArtUrl(deck, 'artUrl2', ['image2', 'art_url2', 'scryfallCrop2', 'commanderArt2']) : '',
+      games: 0,
+      wins: 0,
+      posSum: 0,
+      unregistered: false
+    };
+
+    deckList.push(entry);
+
+    // A logged commander can be the combined label, the primary or the partner name.
+    const names = [label, c1];
+    if (c2) names.push(c2);
+    names.filter(name => name).forEach(name => {
+      const key = `${playerKey}::${name.toLowerCase()}`;
+      if (!deckLookup.has(key)) deckLookup.set(key, entry);
+    });
+  });
+
+  // 2) Walk every logged pod and accumulate results per player and per deck.
+  rawMatches.forEach(match => {
+    if (!match || !Array.isArray(match.players)) return;
+
+    match.players.forEach(p => {
+      if (!p || !p.player) return;
+
+      const playerKey = p.player.toLowerCase();
+      const position = Number(p.position) || 0;
+
+      let playerEntry = playerMap.get(playerKey);
+      if (!playerEntry) {
+        playerEntry = { player: p.player, playerKey: playerKey, games: 0, wins: 0, posSum: 0 };
+        playerMap.set(playerKey, playerEntry);
+      }
+      playerEntry.games += 1;
+      playerEntry.posSum += position;
+      if (position === 1) playerEntry.wins += 1;
+
+      const commanderName = (p.commander || '').trim();
+      const deckKey = `${playerKey}::${commanderName.toLowerCase()}`;
+
+      let deckEntry = deckLookup.get(deckKey);
+      if (!deckEntry) {
+        // Result logged with a commander that is not part of the registered roster.
+        deckEntry = {
+          player: p.player,
+          playerKey: playerKey,
+          commander1: commanderName,
+          commander2: '',
+          label: commanderName,
+          colorIdentity: 'C',
+          artUrl1: '',
+          artUrl2: '',
+          games: 0,
+          wins: 0,
+          posSum: 0,
+          unregistered: true
+        };
+        deckList.push(deckEntry);
+        deckLookup.set(deckKey, deckEntry);
+      }
+      deckEntry.games += 1;
+      deckEntry.posSum += position;
+      if (position === 1) deckEntry.wins += 1;
+    });
+  });
+
+  const finalizeEntry = entry => {
+    entry.winRateNum = entry.games > 0 ? (entry.wins / entry.games) * 100 : 0;
+    entry.winRate = entry.winRateNum.toFixed(1) + '%';
+    entry.avgPosNum = entry.games > 0 ? entry.posSum / entry.games : 0;
+    entry.avgPos = entry.games > 0 ? entry.avgPosNum.toFixed(1) : 'N/A';
+    return entry;
+  };
+
+  deckList.forEach(finalizeEntry);
+
+  const players = Array.from(playerMap.values()).map(playerEntry => {
+    const ownDecks = deckList.filter(d => d.playerKey === playerEntry.playerKey);
+    const playedDecks = ownDecks
+      .filter(d => d.games > 0)
+      .sort((a, b) => (b.games - a.games) || (b.wins - a.wins));
+    const signatureDeck = playedDecks[0] || ownDecks[0] || null;
+
+    return finalizeEntry(Object.assign(playerEntry, {
+      deckCount: ownDecks.length,
+      signatureDeck: signatureDeck ? signatureDeck.label : 'No deck registered',
+      colorIdentity: signatureDeck ? signatureDeck.colorIdentity : 'C',
+      artUrl1: signatureDeck ? signatureDeck.artUrl1 : ''
+    }));
+  });
+
+  return { players: players, decks: deckList };
+}
+
+// Every entry sharing the best score (ties included).
+function topEntries(entries, scoreFn, direction = 'desc', qualifier = null) {
+  const pool = entries.filter(entry => entry.games > 0 && (!qualifier || qualifier(entry)));
+  if (pool.length === 0) return [];
+
+  const best = pool.reduce((acc, entry) => {
+    const value = scoreFn(entry);
+    if (acc === null) return value;
+    return direction === 'asc' ? Math.min(acc, value) : Math.max(acc, value);
+  }, null);
+
+  return pool.filter(entry => scoreFn(entry) === best);
+}
+
+// Same as topEntries, but falls back to everyone when nobody meets the minimum games played.
+function pickAwardEntries(entries, scoreFn, direction = 'desc', minGames = MIN_GAMES_FOR_RANKING) {
+  const qualified = topEntries(entries, scoreFn, direction, entry => entry.games >= minGames);
+  if (qualified.length > 0) return { entries: qualified, fallback: false };
+  return { entries: topEntries(entries, scoreFn, direction), fallback: true };
+}
+
+function sortLeaderboardEntries(entries, sortKey) {
+  const scoreFn = sortKey === 'winRate' ? (entry => entry.winRateNum)
+    : sortKey === 'avgPos' ? (entry => entry.avgPosNum)
+      : sortKey === 'games' ? (entry => entry.games)
+        : (entry => entry.wins);
+  const direction = sortKey === 'avgPos' ? 1 : -1;
+
+  return entries.filter(entry => entry.games > 0).sort((a, b) => {
+    const diff = (scoreFn(a) - scoreFn(b)) * direction;
+    if (diff !== 0) return diff;
+    if (b.games !== a.games) return b.games - a.games;
+    return String(a.label || a.player).localeCompare(String(b.label || b.player));
+  });
+}
+
+/* ============================================================================
+   LEADERBOARD RENDERING
+   ============================================================================ */
+
+function renderLeaderboard() {
+  const awardsEl = document.getElementById('leaderboardAwards');
+  const recordsEl = document.getElementById('leaderboardRecords');
+  const playerBody = document.getElementById('playerLeaderboardRows');
+  const deckBody = document.getElementById('deckLeaderboardRows');
+  if (!awardsEl || !playerBody || !deckBody) return;
+
+  if (rawDecks.length === 0 && rawMatches.length === 0) {
+    awardsEl.innerHTML = '';
+    recordsEl.innerHTML = '';
+    playerBody.innerHTML = '<tr><td class="empty-row" colspan="7">No match data logged yet.</td></tr>';
+    deckBody.innerHTML = '<tr><td class="empty-row" colspan="7">No match data logged yet.</td></tr>';
+    return;
+  }
+
+  const stats = buildLeaderboardStats();
+
+  renderLeaderboardAwards(stats, awardsEl);
+  renderLeaderboardRecords(stats, recordsEl);
+  renderPlayerLeaderboardTable(stats, playerBody);
+  renderDeckLeaderboardTable(stats, deckBody);
+}
+
+function awardStatHTML(value, label) {
+  return `<div class="award-stat"><span class="award-stat-value">${escapeHTML(value)}</span><span class="award-stat-label">${escapeHTML(label)}</span></div>`;
+}
+
+function buildAwardCardHTML(award) {
+  const artCrop = toArtCrop(award.artUrl);
+  const style = artCrop ? `background-image: url('${artCrop}')` : '';
+
+  if (!award.entries || award.entries.length === 0) {
+    return `
+      <div class="award-card" style="${style}">
+        <div class="award-content">
+          <div class="award-label">${escapeHTML(award.label)}</div>
+          <div class="award-empty">Not enough match data yet.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="award-card" style="${style}">
+      <div class="award-content">
+        <div class="award-label">${escapeHTML(award.label)}</div>
+        <div class="award-title">${escapeHTML(award.title)}</div>
+        ${award.manaHTML ? `<div class="award-mana">${award.manaHTML}</div>` : ''}
+        <div class="award-sub">${escapeHTML(award.subtitle)}</div>
+        <div class="award-stats">${award.stats.map(s => awardStatHTML(s.value, s.label)).join('')}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLeaderboardAwards(stats, container) {
+  const topPlayer = topEntries(stats.players, entry => entry.wins);
+  const topDeck = topEntries(stats.decks, entry => entry.wins);
+  const bestPlayerAvg = pickAwardEntries(stats.players, entry => entry.avgPosNum, 'asc');
+  const bestDeckAvg = pickAwardEntries(stats.decks, entry => entry.avgPosNum, 'asc');
+
+  // Stat rows shared by the award cards, ordered to suit each award.
+  const coreStats = entry => [
+    { value: entry.wins, label: 'Wins' },
+    { value: entry.winRate, label: 'Win Rate' },
+    { value: entry.games, label: 'Games' },
+    { value: entry.avgPos, label: 'Avg Finish' }
+  ];
+
+  const avgStats = entry => [
+    { value: entry.avgPos, label: 'Avg Finish' },
+    { value: entry.games, label: 'Games' },
+    { value: entry.wins, label: 'Wins' },
+    { value: entry.winRate, label: 'Win Rate' }
+  ];
+
+  const provisionalSub = `Provisional - fewer than ${MIN_GAMES_FOR_RANKING} games played`;
+  const qualifiedSub = `Lowest average finishing position (min. ${MIN_GAMES_FOR_RANKING} games)`;
+
+  const awards = [
+    {
+      label: 'Top Player',
+      entries: topPlayer,
+      title: topPlayer.map(entry => entry.player).join(' & '),
+      subtitle: topPlayer.length > 1 ? `Tied on ${topPlayer[0].wins} wins` : 'Most match wins in the league',
+      artUrl: topPlayer.length ? topPlayer[0].artUrl1 : '',
+      manaHTML: topPlayer.length ? renderManaSymbols(topPlayer[0].colorIdentity) : '',
+      stats: topPlayer.length ? coreStats(topPlayer[0]) : []
+    },
+    {
+      label: 'Top Deck',
+      entries: topDeck,
+      title: topDeck.map(entry => entry.label).join(' & '),
+      subtitle: topDeck.length === 1
+        ? `Piloted by ${topDeck[0].player}`
+        : topDeck.map(entry => `${entry.label} (${entry.player})`).join(', '),
+      artUrl: topDeck.length ? topDeck[0].artUrl1 : '',
+      manaHTML: topDeck.length ? renderManaSymbols(topDeck[0].colorIdentity) : '',
+      stats: topDeck.length ? coreStats(topDeck[0]) : []
+    },
+    {
+      label: 'Best Avg Finish (Player)',
+      entries: bestPlayerAvg.entries,
+      title: bestPlayerAvg.entries.map(entry => entry.player).join(' & '),
+      subtitle: bestPlayerAvg.fallback ? provisionalSub : qualifiedSub,
+      artUrl: bestPlayerAvg.entries.length ? bestPlayerAvg.entries[0].artUrl1 : '',
+      manaHTML: '',
+      stats: bestPlayerAvg.entries.length ? avgStats(bestPlayerAvg.entries[0]) : []
+    },
+    {
+      label: 'Best Avg Finish (Deck)',
+      entries: bestDeckAvg.entries,
+      title: bestDeckAvg.entries.map(entry => entry.label).join(' & '),
+      subtitle: bestDeckAvg.fallback ? provisionalSub : qualifiedSub,
+      artUrl: bestDeckAvg.entries.length ? bestDeckAvg.entries[0].artUrl1 : '',
+      manaHTML: bestDeckAvg.entries.length ? renderManaSymbols(bestDeckAvg.entries[0].colorIdentity) : '',
+      stats: bestDeckAvg.entries.length ? avgStats(bestDeckAvg.entries[0]) : []
+    }
+  ];
+
+  container.innerHTML = awards.map(buildAwardCardHTML).join('');
+}
+
+function renderLeaderboardRecords(stats, container) {
+  const rankedPlayers = stats.players.filter(entry => entry.games > 0);
+  const mostGames = topEntries(stats.players, entry => entry.games);
+  const bestRate = pickAwardEntries(stats.players, entry => entry.winRateNum, 'desc');
+
+  const records = [
+    { value: rawMatches.length, label: 'Matches Logged' },
+    { value: rankedPlayers.length, label: 'Players Ranked' },
+    { value: stats.decks.length, label: 'Decks Tracked' },
+    {
+      value: mostGames.length ? `${mostGames[0].games} - ${mostGames[0].player}` : 'N/A',
+      label: 'Most Games Played'
+    },
+    {
+      value: bestRate.entries.length ? `${bestRate.entries[0].winRate} - ${bestRate.entries[0].player}` : 'N/A',
+      label: `Highest Win Rate (min ${MIN_GAMES_FOR_RANKING} games)`
+    }
+  ];
+
+  container.innerHTML = records.map(record => `
+    <div class="record-tile">
+      <div class="record-value">${escapeHTML(record.value)}</div>
+      <div class="record-label">${escapeHTML(record.label)}</div>
+    </div>
+  `).join('');
+}
+
+function renderPlayerLeaderboardTable(stats, tbody) {
+  const rows = sortLeaderboardEntries(stats.players, playerLeaderboardSort);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td class="empty-row" colspan="7">No player results logged yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((entry, idx) => `
+    <tr onclick="openPlayerFromLeaderboard('${toJsString(entry.player)}')">
+      <td class="rank-cell">${idx + 1}</td>
+      <td><span class="player-cell">${escapeHTML(entry.player)}</span></td>
+      <td>${entry.deckCount}</td>
+      <td>${entry.games}</td>
+      <td>${entry.wins}</td>
+      <td class="win-cell">${escapeHTML(entry.winRate)}</td>
+      <td>${escapeHTML(entry.avgPos)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderDeckLeaderboardTable(stats, tbody) {
+  const rows = sortLeaderboardEntries(stats.decks, deckLeaderboardSort);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td class="empty-row" colspan="7">No deck results logged yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map((entry, idx) => `
+    <tr onclick="openDeckFromLeaderboard('${toJsString(entry.player)}','${toJsString(entry.label)}')">
+      <td class="rank-cell">${idx + 1}</td>
+      <td>
+        <div class="deck-cell"
+          title="${entry.unregistered ? 'Logged in a pod but not part of the registered deck roster' : ''}">
+          ${renderManaSymbols(entry.colorIdentity)}
+          <span>${escapeHTML(entry.label)}</span>
+        </div>
+      </td>
+      <td class="pilot-cell">${escapeHTML(entry.player)}</td>
+      <td>${entry.games}</td>
+      <td>${entry.wins}</td>
+      <td class="win-cell">${escapeHTML(entry.winRate)}</td>
+      <td>${escapeHTML(entry.avgPos)}</td>
+    </tr>
+  `).join('');
 }
