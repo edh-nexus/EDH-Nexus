@@ -1,0 +1,170 @@
+[
+  {
+    "player": "Ashton",
+    "commander1": "Godzilla, King of the Monsters",
+    "commander2": "None",
+    "colorIdentity": "RG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/9/a/9a0639a0-c898-4a07-975c-a02bdd53175b.webp?1783930992",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Greensleeves, Maro-Sorcerer",
+    "commander2": "None",
+    "colorIdentity": "G",
+    "artUrl1": "https://cards.scryfall.io/grid/front/0/9/0969d7f3-cec5-4118-adb1-ff957eedf6ab.webp?1783921467",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Isamaru, Hound of Konda",
+    "commander2": "None",
+    "colorIdentity": "W",
+    "artUrl1": "https://cards.scryfall.io/grid/front/6/a/6afead32-3542-44c4-82d6-b6a81beb9f90.webp?1783930470",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Jinnie Fay, Jetmir's Second",
+    "commander2": "None",
+    "colorIdentity": "WRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/c/5/c5f9326a-2a41-45b3-97c3-548f0bdc0882.webp?1783923082",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Kenrith, the Returned King",
+    "commander2": "None",
+    "colorIdentity": "WUBRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/0/e/0e259db1-14db-4314-998c-6a076a28d8cb.webp?1783916113",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Kutzil, Malamet Exemplar",
+    "commander2": "None",
+    "colorIdentity": "WG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/c/9/c9f88a40-a6ed-4c1f-a309-011aca1acddd.webp?1783913732",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Mogis, God of Slaughter",
+    "commander2": "None",
+    "colorIdentity": "BR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/2/a/2a0417bf-b735-46d7-9985-2d991051020f.webp?1783939522",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Sydri, Galvanic Genius",
+    "commander2": "None",
+    "colorIdentity": "WUB",
+    "artUrl1": "https://cards.scryfall.io/grid/front/a/9/a979eee2-56f2-4d8f-946f-a2667bf99cb5.webp?1783939644",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Vadrok, Apex of Thunder",
+    "commander2": "None",
+    "colorIdentity": "WUR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/6/5/658b75a1-c12c-4904-8a65-4eb75d1d32f7.webp?1783930980",
+    "artUrl2": ""
+  },
+  {
+    "player": "Chris",
+    "commander1": "Vial Smasher the Fierce",
+    "commander2": "Ardenn, Intrepid Archaeologist",
+    "colorIdentity": "WBR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/c/c/cc7be939-2202-40fe-8899-a05682d76190.webp?1783909586",
+    "artUrl2": "https://cards.scryfall.io/grid/front/7/2/728b802c-969b-4865-b7a0-871c585d097a.webp?1783928890"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Wilson, Refined Grizzly",
+    "commander2": "Dungeon Delver",
+    "colorIdentity": "UG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/d/f/dfe0daf8-43da-484b-baa1-76f8313c5a0c.webp?1783922700",
+    "artUrl2": "https://cards.scryfall.io/grid/front/c/b/cba131bb-b8b3-4577-9f41-4700d9985134.webp?1783922789"
+  },
+  {
+    "player": "Chris",
+    "commander1": "Xyris, the Writhing Storm",
+    "commander2": "None",
+    "colorIdentity": "URG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/4/4/447db519-7825-4330-99e7-a2429e1f6b2e.webp?1783931227",
+    "artUrl2": ""
+  },
+  {
+    "player": "Kyle",
+    "commander1": "Pantlaza, Sun-Favored",
+    "commander2": "None",
+    "colorIdentity": "WRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/2/5/2524645e-b066-4351-885b-10faa8d819d7.webp?1783913937",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "Auntie Ool, Cursewretch",
+    "commander2": "None",
+    "colorIdentity": "BRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/9/a/9a2e4252-9fbc-4d43-8935-db2cafaa7b5f.webp?1783904606",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "Disa the Restless",
+    "commander2": "None",
+    "colorIdentity": "BRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/c/9/c976edeb-0fa1-4647-a16c-870d8a3c30c6.webp?1783911438",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "Lord Windgrace",
+    "commander2": "None",
+    "colorIdentity": "BRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/2/1/213d6fb8-5624-4804-b263-51f339482754.webp?1783934329",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "Selvala, Heart of the Wilds",
+    "commander2": "None",
+    "colorIdentity": "G",
+    "artUrl1": "https://cards.scryfall.io/grid/front/8/1/812856be-cf51-42de-96d2-4ac91e71d442.webp?1783904541",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "The First Sliver",
+    "commander2": "None",
+    "colorIdentity": "WUBRG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/0/6/06d4fbe1-8a2f-4958-bb85-1a1e5f1e8d87.webp?1783933086",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "The Meep",
+    "commander2": "None",
+    "colorIdentity": "B",
+    "artUrl1": "https://cards.scryfall.io/grid/front/3/6/366c4cdb-c6f2-4ee8-b5fb-acb59a9931bf.webp?1783913392",
+    "artUrl2": ""
+  },
+  {
+    "player": "Tony",
+    "commander1": "The Scarab God",
+    "commander2": "None",
+    "colorIdentity": "UB",
+    "artUrl1": "https://cards.scryfall.io/grid/front/f/4/f4f414ef-84a2-4694-9e98-51bee4576c84.webp?1783915611",
+    "artUrl2": ""
+  },
+  {
+    "player": "Zack",
+    "commander1": "Captain America, Team Leader",
+    "commander2": "None",
+    "colorIdentity": "WUR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/6/1/61a51b67-d941-4e07-9c12-ffe583cb65d4.webp?1783903303",
+    "artUrl2": ""
+  }
+]
