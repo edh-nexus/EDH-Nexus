@@ -38,8 +38,10 @@ const LAST_FETCH_KEY = 'edh_last_fetch';
 const REMOTE_REVISION_KEY = 'edh_remote_revision';
 const MIN_GAMES_FOR_RANKING = 3; // minimum games played to qualify for the "best average finish" awards
 
-// This file only ever reads from GitHub Pages - there is no JSONBin mode, no key and no quota.
-const DATA_SOURCE = 'github';
+// Optional: bin id of the tiny revision stamp shared with admin.html. When set, a
+// background revalidation reads it first (a ~60 byte read) and skips the data files
+// entirely when the revision has not changed. Leave empty to disable revision checks.
+const SYNC_BIN_ID = '';
 
 // Fallback artwork used whenever a commander has no stored Scryfall image.
 const svgPlaceholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
@@ -1220,6 +1222,7 @@ function renderLeaderboard() {
   const podiumEl = document.getElementById('leaderboardPodium');
   const headEl = document.getElementById('leaderboardHead');
   const bodyEl = document.getElementById('leaderboardRows');
+  const recordsEl = document.getElementById('leaderboardRecords');
   if (!podiumEl || !headEl || !bodyEl) return;
 
   updateLeaderboardControls();
