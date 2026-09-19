@@ -21,7 +21,7 @@
 
 // Your published data folder, including the trailing slash. Example:
 //   https://chris.github.io/edh-nexus/data/
-const GITHUB_DATA_BASE = 'https://YOUR-USER.github.io/YOUR-REPO/data/';
+const GITHUB_DATA_BASE = 'https://edh-nexus.github.io/EDH-Nexus/data/';
 
 // How often a device re-checks for new data. The data URLs rotate on this same
 // interval, so a copy older than this can never be handed back by a CDN cache.
@@ -1036,33 +1036,52 @@ function renderLeaderboard() {
   renderDeckLeaderboardTable(stats, deckBody);
 }
 
-function awardStatHTML(value, label) {
-  return `<div class="award-stat"><span class="award-stat-value">${escapeHTML(value)}</span><span class="award-stat-label">${escapeHTML(label)}</span></div>`;
-}
-
+// Award cards borrow the Players tab's .player-card markup (card-left-column,
+// card-left-info, player-name-title, player-mana-row, card-right-stats) so the two
+// tabs share one visual design: same photo background, overlay, rounded corners,
+// box-shadow and hover-revealed stat panel.
 function buildAwardCardHTML(award) {
-  const artCrop = toArtCrop(award.artUrl);
-  const style = artCrop ? `background-image: url('${artCrop}')` : '';
+  const hasEntries = Boolean(award.entries && award.entries.length > 0);
 
-  if (!award.entries || award.entries.length === 0) {
+  if (!hasEntries) {
     return `
-      <div class="award-card" style="${style}">
-        <div class="award-content">
-          <div class="award-label">${escapeHTML(award.label)}</div>
-          <div class="award-empty">Not enough match data yet.</div>
+      <div class="player-card award-card is-empty">
+        <div class="card-left-column">
+          <div class="card-left-info">
+            <div class="award-label">${escapeHTML(award.label)}</div>
+            <div class="award-empty">Not enough match data yet.</div>
+          </div>
         </div>
       </div>
     `;
   }
 
+  const artCrop = toArtCrop(award.artUrl);
+  const bgStyle = artCrop ? ` style="background-image: url('${artCrop}')"` : '';
+  const clickAttr = award.onClick ? ` onclick="${award.onClick}"` : '';
+
   return `
-    <div class="award-card" style="${style}">
-      <div class="award-content">
-        <div class="award-label">${escapeHTML(award.label)}</div>
-        <div class="award-title">${escapeHTML(award.title)}</div>
-        ${award.manaHTML ? `<div class="award-mana">${award.manaHTML}</div>` : ''}
-        <div class="award-sub">${escapeHTML(award.subtitle)}</div>
-        <div class="award-stats">${award.stats.map(s => awardStatHTML(s.value, s.label)).join('')}</div>
+    <div class="player-card award-card"${clickAttr}>
+      <div class="card-left-column"${bgStyle}>
+        <div class="card-left-info">
+          <div class="award-label">${escapeHTML(award.label)}</div>
+          <div class="player-name-title">${escapeHTML(award.title)}</div>
+          <div class="award-sub">${escapeHTML(award.subtitle)}</div>
+          ${award.manaHTML ? `<div class="player-mana-row">${award.manaHTML}</div>` : ''}
+        </div>
+      </div>
+      <div class="card-right-column">
+        <div class="card-right-stats">
+          <div class="stat-box">
+            <span class="stat-value">${escapeHTML(award.stat1.value)}</span>
+            <span class="stat-label">${escapeHTML(award.stat1.label)}</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-box">
+            <span class="stat-value win-color">${escapeHTML(award.stat2.value)}</span>
+            <span class="stat-label">${escapeHTML(award.stat2.label)}</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -1073,21 +1092,6 @@ function renderLeaderboardAwards(stats, container) {
   const topDeck = topEntries(stats.decks, entry => entry.wins);
   const bestPlayerAvg = pickAwardEntries(stats.players, entry => entry.avgPosNum, 'asc');
   const bestDeckAvg = pickAwardEntries(stats.decks, entry => entry.avgPosNum, 'asc');
-
-  // Stat rows shared by the award cards, ordered to suit each award.
-  const coreStats = entry => [
-    { value: entry.wins, label: 'Wins' },
-    { value: entry.winRate, label: 'Win Rate' },
-    { value: entry.games, label: 'Games' },
-    { value: entry.avgPos, label: 'Avg Finish' }
-  ];
-
-  const avgStats = entry => [
-    { value: entry.avgPos, label: 'Avg Finish' },
-    { value: entry.games, label: 'Games' },
-    { value: entry.wins, label: 'Wins' },
-    { value: entry.winRate, label: 'Win Rate' }
-  ];
 
   const provisionalSub = `Provisional - fewer than ${MIN_GAMES_FOR_RANKING} games played`;
   const qualifiedSub = `Lowest average finishing position (min. ${MIN_GAMES_FOR_RANKING} games)`;
@@ -1100,7 +1104,9 @@ function renderLeaderboardAwards(stats, container) {
       subtitle: topPlayer.length > 1 ? `Tied on ${topPlayer[0].wins} wins` : 'Most match wins in the league',
       artUrl: topPlayer.length ? topPlayer[0].artUrl1 : '',
       manaHTML: topPlayer.length ? renderManaSymbols(topPlayer[0].colorIdentity) : '',
-      stats: topPlayer.length ? coreStats(topPlayer[0]) : []
+      stat1: topPlayer.length ? { value: topPlayer[0].wins, label: 'Wins' } : null,
+      stat2: topPlayer.length ? { value: topPlayer[0].winRate, label: 'Win Rate' } : null,
+      onClick: topPlayer.length ? `openPlayerFromLeaderboard('${toJsString(topPlayer[0].player)}')` : ''
     },
     {
       label: 'Top Deck',
@@ -1111,7 +1117,9 @@ function renderLeaderboardAwards(stats, container) {
         : topDeck.map(entry => `${entry.label} (${entry.player})`).join(', '),
       artUrl: topDeck.length ? topDeck[0].artUrl1 : '',
       manaHTML: topDeck.length ? renderManaSymbols(topDeck[0].colorIdentity) : '',
-      stats: topDeck.length ? coreStats(topDeck[0]) : []
+      stat1: topDeck.length ? { value: topDeck[0].wins, label: 'Wins' } : null,
+      stat2: topDeck.length ? { value: topDeck[0].winRate, label: 'Win Rate' } : null,
+      onClick: topDeck.length ? `openDeckFromLeaderboard('${toJsString(topDeck[0].player)}','${toJsString(topDeck[0].label)}')` : ''
     },
     {
       label: 'Best Avg Finish (Player)',
@@ -1120,7 +1128,9 @@ function renderLeaderboardAwards(stats, container) {
       subtitle: bestPlayerAvg.fallback ? provisionalSub : qualifiedSub,
       artUrl: bestPlayerAvg.entries.length ? bestPlayerAvg.entries[0].artUrl1 : '',
       manaHTML: '',
-      stats: bestPlayerAvg.entries.length ? avgStats(bestPlayerAvg.entries[0]) : []
+      stat1: bestPlayerAvg.entries.length ? { value: bestPlayerAvg.entries[0].avgPos, label: 'Avg Finish' } : null,
+      stat2: bestPlayerAvg.entries.length ? { value: bestPlayerAvg.entries[0].games, label: 'Games' } : null,
+      onClick: bestPlayerAvg.entries.length ? `openPlayerFromLeaderboard('${toJsString(bestPlayerAvg.entries[0].player)}')` : ''
     },
     {
       label: 'Best Avg Finish (Deck)',
@@ -1129,7 +1139,9 @@ function renderLeaderboardAwards(stats, container) {
       subtitle: bestDeckAvg.fallback ? provisionalSub : qualifiedSub,
       artUrl: bestDeckAvg.entries.length ? bestDeckAvg.entries[0].artUrl1 : '',
       manaHTML: bestDeckAvg.entries.length ? renderManaSymbols(bestDeckAvg.entries[0].colorIdentity) : '',
-      stats: bestDeckAvg.entries.length ? avgStats(bestDeckAvg.entries[0]) : []
+      stat1: bestDeckAvg.entries.length ? { value: bestDeckAvg.entries[0].avgPos, label: 'Avg Finish' } : null,
+      stat2: bestDeckAvg.entries.length ? { value: bestDeckAvg.entries[0].games, label: 'Games' } : null,
+      onClick: bestDeckAvg.entries.length ? `openDeckFromLeaderboard('${toJsString(bestDeckAvg.entries[0].player)}','${toJsString(bestDeckAvg.entries[0].label)}')` : ''
     }
   ];
 
