@@ -65,7 +65,7 @@ h1 {
     font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
-    gap: 6px
+    gap: 6px;
 }
 
 .btn:disabled {
@@ -756,13 +756,8 @@ h1 {
 }
 
 .sort-btn {
-    background-color: var(--bg-color);
-    border: 1px solid var(--border-color);
     color: var(--text-muted);
-    padding: 4px 8px;
-    border-radius: 5px;
     font-family: inherit;
-    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     cursor: pointer
@@ -910,23 +905,18 @@ h1 {
 
 .segmented {
     display: inline-flex;
-    gap: 4px;
-    padding: 4px;
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
-    border-radius: 999px
+    border-radius: 6px
 }
 
 .seg-btn {
     background: none;
     border: 1px solid transparent;
-    border-radius: 999px;
     color: var(--text-muted);
     font-family: inherit;
-    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    padding: 6px 18px;
     cursor: pointer
 }
 
@@ -935,9 +925,9 @@ h1 {
 }
 
 .seg-btn.active {
-    color: var(--accent-hover);
-    border-color: var(--accent-hover);
-    background-color: rgba(56, 189, 248, 0.12)
+    color: var(--text-main);
+    border-color: var(--accent-color);
+    background-color: var(--accent-color);
 }
 
 .standings-hint {

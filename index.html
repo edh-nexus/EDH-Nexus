@@ -28,7 +28,6 @@
   <div id="loading">Loading EDH Nexus database...</div>
   <!-- PLAYER SELECTION VIEW -->
   <div id="playerSelectionView" style="display: none;">
-    <div class="view-title">Select a Player</div>
     <div id="playerGrid" class="player-grid"></div>
   </div>
   <!-- DASHBOARD DISPLAY -->
@@ -89,25 +88,25 @@
   </div>
   <!-- LEADERBOARD VIEW -->
   <div id="leaderboardView" style="display: none;">
-    <div class="view-title">League Leaderboard</div>
 
-    <!-- Toolbar: what is being ranked, and by which stat -->
+    <!-- Toolbar -->
     <div class="card leaderboard-toolbar">
       <div class="toolbar-group">
         <span class="toolbar-label">Ranking</span>
+        
         <div id="entityControls" class="segmented">
-          <button class="seg-btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
-          <button class="seg-btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
+          <button class="seg-btn btn active" id="playerBtn" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
+          <button class="seg-btn btn" id="decksBtn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
         </div>
       </div>
       <div class="toolbar-group toolbar-group--grow">
         <span class="toolbar-label">Sort by</span>
         <div id="leaderboardSortControls" class="sort-controls">
-          <button class="sort-btn active" data-sort="wins" onclick="setLeaderboardSort('wins')">Wins</button>
-          <button class="sort-btn" data-sort="winRate" onclick="setLeaderboardSort('winRate')">Win Rate</button>
-          <button class="sort-btn" data-sort="avgPos" onclick="setLeaderboardSort('avgPos')">Avg Position</button>
-          <button class="sort-btn" data-sort="games" onclick="setLeaderboardSort('games')">Games Played</button>
-          <button class="sort-btn" data-sort="kills" onclick="setLeaderboardSort('kills')">Kill Count</button>
+          <button class="sort-btn btn active" data-sort="wins" onclick="setLeaderboardSort('wins')">Wins</button>
+          <button class="sort-btn btn" data-sort="winRate" onclick="setLeaderboardSort('winRate')">Win Rate</button>
+          <button class="sort-btn btn" data-sort="avgPos" onclick="setLeaderboardSort('avgPos')">Avg Position</button>
+          <button class="sort-btn btn" data-sort="games" onclick="setLeaderboardSort('games')">Games Played</button>
+          <button class="sort-btn btn" data-sort="kills" onclick="setLeaderboardSort('kills')">Kill Count</button>
         </div>
       </div>
     </div>
