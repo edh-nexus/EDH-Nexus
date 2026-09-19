@@ -3,36 +3,6 @@
     "gameId": "GAME_1789836551997",
     "date": "2026-09-19",
     "players": [
-      {
-        "player": "Ashton",
-        "commander": "Godzilla, King of the Monsters",
-        "position": 1,
-        "kills": 1
-      },
-      {
-        "player": "Chris",
-        "commander": "Vial Smasher the Fierce & Ardenn, Intrepid Archaeologist",
-        "position": 2,
-        "kills": 2,
-        "killedBy": "Ashton",
-        "killedByCommander": "Godzilla, King of the Monsters"
-      },
-      {
-        "player": "Zack",
-        "commander": "Captain America, Team Leader",
-        "position": 3,
-        "kills": 0,
-        "killedBy": "Chris",
-        "killedByCommander": "Vial Smasher the Fierce & Ardenn, Intrepid Archaeologist"
-      },
-      {
-        "player": "Kyle",
-        "commander": "Pantlaza, Sun-Favored",
-        "position": 4,
-        "kills": 0,
-        "killedBy": "Chris",
-        "killedByCommander": "Vial Smasher the Fierce & Ardenn, Intrepid Archaeologist"
-      }
     ]
   }
 ]
