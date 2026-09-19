@@ -24,5 +24,41 @@
         "position": 4
       }
     ]
+  },
+  {
+    "gameId": "GAME_1789830051873",
+    "date": "2026-09-19",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Greensleeves, Maro-Sorcerer",
+        "position": 1,
+        "kills": 1
+      },
+      {
+        "player": "Ashton",
+        "commander": "Godzilla, King of the Monsters",
+        "position": 2,
+        "kills": 2,
+        "killedBy": "Chris",
+        "killedByCommander": "Greensleeves, Maro-Sorcerer"
+      },
+      {
+        "player": "Kyle",
+        "commander": "Pantlaza, Sun-Favored",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Ashton",
+        "killedByCommander": "Godzilla, King of the Monsters"
+      },
+      {
+        "player": "Zack",
+        "commander": "Captain America, Team Leader",
+        "position": 4,
+        "kills": 0,
+        "killedBy": "Ashton",
+        "killedByCommander": "Godzilla, King of the Monsters"
+      }
+    ]
   }
 ]
