@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-
+ 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,15 +11,14 @@
   <link href="style.css" rel="stylesheet">
   <script src="code.js"></script>
 </head>
-
+ 
 <body>
   <header>
     <h1>EDH Nexus</h1>
-    <div class="controls"><button id="syncStatus" class="sync-status" onclick="forceRefresh()"
-        title="Cached on this device and re-checked automatically. Click to check now.">Loading...</button>
-      <button id="backToPlayersBtn" class="btn" style="display: none;" onclick="showPlayerSelection()"> &larr; Back to
-        Players </button> <button id="selectDeckBtn" class="btn btn-primary" style="display: none;"
-        onclick="openDeckModal()"> Select Deck </button></div>
+    <div class="topBtn">
+      <button id="backToPlayersBtn" class="btn" onclick="showPlayerSelection()"> &larr; Back to
+        Players </button> <button id="selectDeckBtn" class="btn btn-primary" onclick="openDeckModal()"> Select Deck </button>
+    </div>
   </header>
   <!-- MAIN TABS -->
   <nav class="tab-nav">
@@ -36,8 +35,7 @@
   <div id="dashboard" class="dashboard-grid" style="display: none;">
     <div class="card">
       <h4 id="commanderCardHeader"
-        style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">ACTIVE
-        COMMANDER</h4>
+        style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">Active Commander</h4>
       <div id="artContainer" class="art-container" onclick="togglePartnerStack()"><img id="commanderArt1"
           class="single-art" alt="Commander Art 1" onerror="this.onerror=null; this.src=svgPlaceholder;"> <img
           id="commanderArt2" class="stacked-card partner-c2" alt="Commander Art 2" style="display: none;"
@@ -47,31 +45,34 @@
       </div>
     </div>
     <div class="card">
-      <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">
-        STATISTICS</h4>
+      <h4 style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">
+        Statistics</h4>
       <div class="stats-grid">
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">TOTAL GAMES</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Total Games</div>
           <div id="totalGames" class="stat-val">0</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">RECORD (W / L)</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Record (W / L)</div>
           <div id="winsLosses" class="stat-val">0 / 0</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">WIN RATE</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Win Rate</div>
           <div id="winRate" class="stat-val" style="color: var(--win-color);">0%</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">AVG POSITION</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">AVG Position</div>
           <div id="avgPos" class="stat-val">N/A</div>
+        </div>
+        <div class="stat-box">
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Kills</div>
+          <div id="totalKills" class="stat-val">0</div>
         </div>
       </div>
     </div>
   </div>
   <div id="historyCard" class="card" style="margin-top: 20px; display: none;">
-    <h4 style="text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">MATCH
-      HISTORY</h4>
+    <h4 style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">Match History</h4>
     <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
       <thead>
         <tr
@@ -79,6 +80,7 @@
           <th style="padding: 8px;">Date</th>
           <th style="padding: 8px;">Commander</th>
           <th style="padding: 8px;">Finish</th>
+          <th style="padding: 8px;">Kills</th>
           <th style="padding: 8px;">Opponents &amp; Decks</th>
         </tr>
       </thead>
@@ -88,65 +90,41 @@
   <!-- LEADERBOARD VIEW -->
   <div id="leaderboardView" style="display: none;">
     <div class="view-title">League Leaderboard</div>
-    <div id="leaderboardAwards" class="award-grid"></div>
-    <div id="leaderboardRecords" class="record-strip"></div>
-    <div class="leaderboard-columns">
-      <div class="card">
-        <div class="leaderboard-card-head">
-          <h4 class="card-heading">PLAYER STANDINGS</h4>
-          <div id="playerSortControls" class="sort-controls">
-            <button class="sort-btn active" data-sort="wins"
-              onclick="setLeaderboardSort('player','wins')">Wins</button>
-            <button class="sort-btn" data-sort="winRate"
-              onclick="setLeaderboardSort('player','winRate')">Win Rate</button>
-            <button class="sort-btn" data-sort="avgPos" onclick="setLeaderboardSort('player','avgPos')">Avg
-              Finish</button>
-            <button class="sort-btn" data-sort="games" onclick="setLeaderboardSort('player','games')">Games</button>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Player</th>
-                <th>Decks</th>
-                <th>Games</th>
-                <th>Wins</th>
-                <th>Win %</th>
-                <th>Avg Finish</th>
-              </tr>
-            </thead>
-            <tbody id="playerLeaderboardRows"></tbody>
-          </table>
+
+    <!-- Toolbar: what is being ranked, and by which stat -->
+    <div class="card leaderboard-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">Ranking</span>
+        <div id="entityControls" class="segmented">
+          <button class="seg-btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
+          <button class="seg-btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
         </div>
       </div>
-      <div class="card">
-        <div class="leaderboard-card-head">
-          <h4 class="card-heading">DECK STANDINGS</h4>
-          <div id="deckSortControls" class="sort-controls">
-            <button class="sort-btn active" data-sort="wins" onclick="setLeaderboardSort('deck','wins')">Wins</button>
-            <button class="sort-btn" data-sort="winRate" onclick="setLeaderboardSort('deck','winRate')">Win Rate</button>
-            <button class="sort-btn" data-sort="avgPos" onclick="setLeaderboardSort('deck','avgPos')">Avg Finish</button>
-            <button class="sort-btn" data-sort="games" onclick="setLeaderboardSort('deck','games')">Games</button>
-          </div>
+      <div class="toolbar-group toolbar-group--grow">
+        <span class="toolbar-label">Sort by</span>
+        <div id="leaderboardSortControls" class="sort-controls">
+          <button class="sort-btn active" data-sort="wins" onclick="setLeaderboardSort('wins')">Wins</button>
+          <button class="sort-btn" data-sort="winRate" onclick="setLeaderboardSort('winRate')">Win Rate</button>
+          <button class="sort-btn" data-sort="avgPos" onclick="setLeaderboardSort('avgPos')">Avg Position</button>
+          <button class="sort-btn" data-sort="games" onclick="setLeaderboardSort('games')">Games Played</button>
+          <button class="sort-btn" data-sort="kills" onclick="setLeaderboardSort('kills')">Kill Count</button>
         </div>
-        <div class="table-scroll">
-          <table class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Deck</th>
-                <th>Pilot</th>
-                <th>Games</th>
-                <th>Wins</th>
-                <th>Win %</th>
-                <th>Avg Finish</th>
-              </tr>
-            </thead>
-            <tbody id="deckLeaderboardRows"></tbody>
-          </table>
-        </div>
+      </div>
+    </div>
+
+    <!-- Top three, rendered as podium tiles -->
+    <div id="leaderboardPodium" class="card podium-card"></div>
+
+    <div id="leaderboardRecords" class="record-strip"></div>
+
+    <div class="card">
+      <div class="table-scroll">
+        <table class="leaderboard-table">
+          <thead>
+            <tr id="leaderboardHead"></tr>
+          </thead>
+          <tbody id="leaderboardRows"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -164,5 +142,5 @@
     </div>
   </div>
 </body>
-
+ 
 </html>
