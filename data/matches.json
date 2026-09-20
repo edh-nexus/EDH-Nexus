@@ -38,5 +38,37 @@
       "player": "Lacey",
       "commander": "Umbris, Fear Manifest"
     }
+  },
+  {
+    "gameId": "GAME_1789882629818",
+    "date": "2026-09-19",
+    "players": [
+      {
+        "player": "Lacey",
+        "commander": "Edgar Markov",
+        "position": 1,
+        "kills": 2
+      },
+      {
+        "player": "Ashton",
+        "commander": "Umbris, Fear Manifest",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Lacey",
+        "killedByCommander": "Edgar Markov"
+      },
+      {
+        "player": "Chris",
+        "commander": "Jinnie Fay, Jetmir's Second",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Lacey",
+        "killedByCommander": "Edgar Markov"
+      }
+    ],
+    "firstBlood": {
+      "player": "Lacey",
+      "commander": "Edgar Markov"
+    }
   }
 ]
