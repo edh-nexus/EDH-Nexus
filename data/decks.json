@@ -123,6 +123,15 @@
   },
   {
     "player": "Lacey",
+    "commander1": "Edgar Markov",
+    "commander2": "None",
+    "colorIdentity": "WBR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/a/5/a577ba08-0aa8-45be-aa83-d5078770127c.webp?1783908078",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Lacey",
     "commander1": "Umbris, Fear Manifest",
     "commander2": "None",
     "colorIdentity": "UB",
