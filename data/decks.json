@@ -8,6 +8,15 @@
     "artUrl2": ""
   },
   {
+    "player": "Ashton",
+    "commander1": "Jarad, Golgari Lich Lord",
+    "commander2": "None",
+    "colorIdentity": "BG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/0/2/02ef18d1-fd05-4dbc-9fa7-a383799b34e9.webp?1783940337",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
     "player": "Chris",
     "commander1": "Greensleeves, Maro-Sorcerer",
     "commander2": "None",
@@ -104,6 +113,15 @@
     "artUrl2": ""
   },
   {
+    "player": "Lacey",
+    "commander1": "Umbris, Fear Manifest",
+    "commander2": "None",
+    "colorIdentity": "UB",
+    "artUrl1": "https://cards.scryfall.io/grid/front/c/f/cf0ce486-58be-4d35-b48c-45eafc62a44e.webp?1783905155",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
     "player": "Tony",
     "commander1": "Auntie Ool, Cursewretch",
     "commander2": "None",
@@ -166,5 +184,14 @@
     "colorIdentity": "WUR",
     "artUrl1": "https://cards.scryfall.io/grid/front/6/1/61a51b67-d941-4e07-9c12-ffe583cb65d4.webp?1783903303",
     "artUrl2": ""
+  },
+  {
+    "player": "Zack",
+    "commander1": "Miirym, Sentinel Wyrm",
+    "commander2": "None",
+    "colorIdentity": "URG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/a/9/a934590b-5c70-4f07-af67-fbe817a99531.webp?1783922689",
+    "artUrl2": "",
+    "decklistUrl": ""
   }
 ]
