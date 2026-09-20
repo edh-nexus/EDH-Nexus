@@ -1,49 +1,36 @@
 /* ============================================================================
-   EDH NEXUS - all data lives in your GitHub repo and is served by GitHub Pages.
-   There are no accounts, no API keys and no request quotas anywhere in this file.
+   EDH NEXUS dashboard
 
-   The dashboard only ever READS, so it needs no credentials at all, and reading
-   never creates a commit.
+   All data lives in the GitHub repo (data/decks.json and data/matches.json) and is
+   served by GitHub Pages. This page only ever reads it, so it needs no accounts,
+   keys or tokens. admin.html is the only page that writes, and only when it is
+   given a fine-grained GitHub token (Contents: Read and write).
 
-   ONE-TIME SETUP
-     1. Create data/decks.json and data/matches.json in the repo (each one is a
-        JSON array). admin.html can write them for you - see its "GitHub
-        Storage" card - or you can paste the JSON in by hand.
+   SETUP
+     1. Create data/decks.json and data/matches.json in the repo (each is a JSON
+        array). admin.html creates them on its first save if they don't exist.
      2. Enable GitHub Pages for the repo (Settings -> Pages -> your branch).
      3. Point GITHUB_DATA_BASE below at the published data folder.
-     4. Share index.html. That is the whole deployment.
-
-   admin.html is the only page that can write, and only if you hand it a
-   fine-grained GitHub token (Contents: Read and write). That token is stored in
-   the browser and is never written into these files. Without a token admin.html
-   still works - it hands you the JSON to paste into GitHub's web editor.
    ============================================================================ */
 
-// Your published data folder, including the trailing slash.
+// Published data folder, including the trailing slash.
 const GITHUB_DATA_BASE = 'https://edh-nexus.github.io/EDH-Nexus/data/';
 
-// How often a device re-checks for new data. The data URLs rotate on this same
-// interval, so a copy older than this can never be handed back by a CDN cache.
+// How long a copy of the data files stays fresh. The data URLs rotate on this interval,
+// so a CDN can never hand back a copy older than this.
 const DATA_REFRESH_MS = 5 * 60 * 1000;
 
-// Re-checks while a tab stays open and visible, and the shortest gap allowed between checks.
+// While a tab is open and visible it re-checks this often, and never more than once
+// per REVALIDATE_MIN_INTERVAL_MS.
 const REVALIDATE_POLL_MS = 5 * 60 * 1000;
 const REVALIDATE_MIN_INTERVAL_MS = 60 * 1000;
 
-// Local cache lives until the published data actually changes - it is never expired by age.
+// The local cache lives until the published data changes - it is never expired by age.
 const CACHE_KEY_DECKS = 'edh_decks';
 const CACHE_KEY_MATCHES = 'edh_matches';
 const CACHE_KEY_FINGERPRINT = 'edh_data_fingerprint';
-const LAST_FETCH_KEY = 'edh_last_fetch';
-const REMOTE_REVISION_KEY = 'edh_remote_revision';
-const MIN_GAMES_FOR_RANKING = 3; // minimum games played to qualify for the "best average finish" awards
 
-// Optional: bin id of the tiny revision stamp shared with admin.html. When set, a
-// background revalidation reads it first (a ~60 byte read) and skips the data files
-// entirely when the revision has not changed. Leave empty to disable revision checks.
-const SYNC_BIN_ID = '';
-
-// Fallback artwork used whenever a commander has no stored Scryfall image.
+// Fallback artwork for commanders with no stored Scryfall image.
 const svgPlaceholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 880">' +
   '<rect width="630" height="880" fill="#171a21"/>' +
@@ -52,6 +39,7 @@ const svgPlaceholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
   '</svg>'
 );
 
+// Mana icons as inline SVG, so they never depend on an external host.
 const MANA_SVGS = {
   'W': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" version="1.1"><circle cx="300" cy="300" r="300" fill="#fffbd5"/><path d="m586.2 342.4c-39.4-22.2-64.6-33.3-75.7-33.3-8.1 0-14.4 6.2-18.9 18.6-4.5 12.4-13.6 18.5-27.2 18.5-5.6 0-16.9-2-34.1-6-9.6 14.6-14.4 24-14.4 28 0 5.6 4.1 12.1 12.4 19.7 8.3 7.6 15.2 11.3 20.9 11.3 3.6 0 8.5-0.7 14.7-2.3 6.2-1.5 10.3-2.3 12.4-2.3 6.2 0 9.3 11.4 9.3 34.1 0 21.7-5 55-15.1 99.9-13.1-51.5-27-77.2-41.6-77.2-2 0-6.2 1.5-12.5 4.6-6.3 3-11 4.5-14 4.5-14.6 0-27.7-13.4-39.4-40.1-23.2 3.5-34.8 15.4-34.8 35.6 0 10.1 4.7 18.2 14 24.2 9.3 6.1 14 10.4 14 12.9 0 13.6-19.9 34.6-59.8 62.8-21.2 15.1-35.8 25.7-43.9 31.8 7-9.1 14.1-20.9 21.2-35.6 8.1-16.6 12.1-29.5 12.1-38.6 0-5-5.8-12.1-17.4-21.2-11.6-9.1-17.4-18.7-17.4-28.8 0-8.6 3-19.2 9.1-31.8-6.6-7.6-14.4-11.4-23.5-11.4-20.2 0-30.3 6.6-30.3 19.7 0-9.1 0-2.3 0 20.4 0.5 16.7-12.1 25-37.9 25-19.7 0-52.7-4.6-99.2-13.6 52.5-13.1 78.7-28.3 78.7-45.4 0 2-1-4-3-18.2-2-15.6 9.1-29.8 33.3-42.4-4.5-23.2-16.6-34.8-36.3-34.8-3 0-8.6 5.3-16.6 15.9-8.1 10.6-15.6 15.9-22.7 15.9-12.1 0-27.8-13.1-46.9-39.4-9.1-13.1-23-32.5-41.6-58.3 11.6 6.1 23.2 12.1 34.8 18.2 15.1 7.1 27.3 10.6 36.3 10.6 7.1 0 14-6.2 20.8-18.6 6.8-12.4 15.8-18.6 26.9-18.6 1.5 0 11.6 3 30.3 9.1 9.6-14.6 14.4-25.5 14.4-32.6 0-6.1-3.7-13-11-20.8-7.3-7.8-14-11.7-20.1-11.7-2.5 0-6.4 0.8-11.7 2.3-5.3 1.5-9.2 2.3-11.7 2.3-9.1 0-13.6-11.4-13.6-34.1 0-6.1 5.8-40.6 17.4-103.7-0.5 7.6 2.8 21.7 9.8 42.4 8.6 25.2 18.7 37.9 30.3 37.9 2 0 6.1-1.5 12.1-4.5 6.1-3 10.8-4.5 14.4-4.5 11.6 0 21.2 6.6 28.8 19.7l11.4 20.4c10.6 0 19.4-3.8 26.5-11.3 7.1-7.6 10.6-16.7 10.6-27.3 0-11.1-4.7-19.6-14-25.4-9.4-5.8-14-10.2-14-13.2 0-10.6 16.7-28.5 50-53.7 26.7-20.2 44.2-32 52.2-35.6-21.7 29.3-32.6 50.7-32.6 64.3 0 7.1 4.3 14.6 12.9 22.7 10.6 9.6 16.7 16.4 18.2 20.4 5 11.6 4.5 27.5-1.5 47.7 13.6 9.6 24 14.4 31 14.4 14.6 0 21.9-7.6 21.9-22.7 0-1.5-0.6-6.3-1.9-14.4-1.3-8.1-1.6-12.6-1.1-13.6 2-7.1 15.9-10.6 41.6-10.6 16.2 0 49.7 4.5 100.7 13.6-11.1 3-27.8 7.6-50 13.6-20.2 6.1-30.3 12.9-30.3 20.4 0 3.5 1.3 9.6 3.8 18.2 2.5 8.6 3.8 14.9 3.8 18.9 0 7.1-4.5 13.6-13.6 19.7l-25.7 18.2c6.1 11.1 10.1 17.7 12.1 19.7 5 6.1 11.9 9.1 20.4 9.1 6.1 0 11.6-5.3 16.7-15.9 5-10.6 13.1-15.9 24.2-15.9 13.6 0 29 12.6 46.2 37.9 9.6 14.2 24.5 35.6 44.6 64.4m-168-43.9c0-32.3-11.9-60.3-35.6-84-23.7-23.7-51.7-35.6-84-35.6-32.8 0-61.1 11.7-84.8 35.2-23.7 23.5-35.8 51.6-36.3 84.4-0.5 32.3 11.5 60.2 36 83.6 24.5 23.5 52.9 35.2 85.2 35.2 34.3 0 63-11.2 85.9-33.7 23-22.4 34.2-50.8 33.7-85.1m-11.4 0c0 30.8-10.3 56.3-31 76.4-20.7 20.2-46.4 30.3-77.2 30.3-29.8 0-55.3-10.3-76.4-31-21.2-20.7-31.8-45.9-31.8-75.7 0-29.3 10.7-54.4 32.2-75.3 21.5-20.9 46.8-31.4 76.1-31.4 29.3 0 54.6 10.6 76.1 31.8 21.4 21.2 32.2 46.2 32.2 74.9" fill="#211d15"/></svg>',
   'U': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><circle cx="300" cy="300" r="300" fill="#aae0fa"/><path d="m546.93 375.53c-28.722 29.23-64.1 43.842-106.13 43.842-47.17 0-84.59-16.14-112.27-48.44-26.15-30.762-39.22-69.972-39.22-117.64 0-51.26 22.302-109.72 66.9-175.34 36.38-53.814 79.19-100.98 128.41-141.48-7.182 32.814-10.758 56.13-10.758 69.972 0 31.794 9.984 62.802 29.976 93.05 24.612 35.88 43.31 62.56 56.14 79.968 19.992 30.26 29.988 59.73 29.988 88.42.001 42.558-14.346 78.44-43.04 107.65m-.774-164.17c-7.686-17.17-16.662-28.572-26.916-34.22 1.536 3.084 2.31 7.44 2.31 13.08 0 10.77-3.072 26.14-9.234 46.13l-9.984 30.762c0 17.94 8.952 26.916 26.904 26.916 18.96 0 28.452-12.57 28.452-37.686 0-12.804-3.84-27.792-11.532-44.988" fill="#061922" transform="translate(-142.01 126.79)"/></svg>',
@@ -61,39 +49,83 @@ const MANA_SVGS = {
   'C': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><circle cx="300" cy="300" r="300" fill="#ccc2c0"/><path d="M300 60A500 500 0 0 0 540 300 500 500 0 0 0 300 540 500 500 0 0 0 60 300 500 500 0 0 0 300 60m0 90A300 300 0 0 1 150 300 300 300 0 0 1 300 450 300 300 0 0 1 450 300 300 300 0 0 1 300 150" fill="#130c0e"/></svg>'
 };
 
-function renderManaSymbols(colorIdentityStr) {
-  if (!colorIdentityStr) return '<div class="mana-container"><img src="https://svg.mana.ninja/c.svg" class="mana-icon" alt="C" title="Colorless" /></div>';
+/* ============================================================================
+   SHARED HELPERS
+   ============================================================================ */
 
-  const colors = colorIdentityStr.toUpperCase().replace(/[^WUBRGC]/g, '').split('');
+// Renders a colour identity string such as "WUB" as mana icons. Empty means colourless.
+function renderManaSymbols(colorIdentityStr) {
+  const colors = String(colorIdentityStr || '').toUpperCase().replace(/[^WUBRGC]/g, '').split('');
   if (colors.length === 0) colors.push('C');
 
-  const icons = colors.map(c => {
-    const src = MANA_SVGS[c] || MANA_SVGS['C'];
-    return `${src}`;
-  }).join('');
-
+  const icons = colors.map(c => MANA_SVGS[c] || MANA_SVGS.C).join('');
   return `<div class="mana-container">${icons}</div>`;
 }
 
-function getArtUrl(deckObj, primaryKey, secondaryKeys = []) {
-  const keys = [primaryKey, ...secondaryKeys];
-  for (const k of keys) {
-    if (deckObj[k] && typeof deckObj[k] === 'string' && deckObj[k].trim() !== '') {
-      return deckObj[k].trim();
-    }
+// Older data used other key names for the artwork. The first one holding a URL wins.
+const ART1_KEYS = ['artUrl1', 'artUrl', 'image', 'art_url', 'scryfallCrop', 'commanderArt1'];
+const ART2_KEYS = ['artUrl2', 'image2', 'art_url2', 'scryfallCrop2', 'commanderArt2'];
+
+function getArtUrl(deck, keys) {
+  for (const key of keys) {
+    const value = deck[key];
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
   }
   return '';
 }
+
+// Scryfall serves the full card image; the art crop is the picture alone.
+function toArtCrop(url) {
+  if (!url || typeof url !== 'string') return '';
+  return url.replace('/grid/', '/art/').replace('/normal/', '/art/').replace('/large/', '/art/');
+}
+
+// 1 -> 1st, 2 -> 2nd, 3 -> 3rd, 4 -> 4th, 11 -> 11th ...
+function ordinal(value) {
+  const n = Number(value) || 0;
+  const lastTwo = n % 100;
+  if (lastTwo >= 11 && lastTwo <= 13) return `${n}th`;
+
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
+function escapeHTML(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Makes a value safe inside single quotes in an inline onclick attribute.
+function toJsString(value) {
+  const raw = String(value === undefined || value === null ? '' : value);
+  return escapeHTML(raw.replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+}
+
+/* ============================================================================
+   STATE
+   ============================================================================ */
 
 let rawDecks = [];
 let rawMatches = [];
 let playerProcessedDecks = [];
 let selectedDeckIndex = 0;
 let activePlayerName = '';
-let autoRefreshTimer = null;
 let activeTab = 'players';
 let leaderboardEntity = 'players'; // 'players' | 'decks'
 let leaderboardSort = 'wins';
+
+let autoRefreshTimer = null;
+let revalidateInFlight = false;
+let lastRevalidateAt = 0;
+let storageSyncTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   registerSyncListeners();
@@ -102,14 +134,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 /* ============================================================================
    DATA SYNC
-   The copy cached in localStorage is rendered immediately, then verified in the
-   background. The cache (and the DOM) are rewritten only when the cloud copy has
-   actually changed, so an unchanged league costs nothing but the check itself.
+   The copy cached in localStorage renders immediately and is then verified in the
+   background. The cache and the screen are rewritten only when the published data
+   has actually changed.
    ============================================================================ */
-
-let revalidateInFlight = false;
-let lastRevalidateAt = 0;
-let storageSyncTimer = null;
 
 // FNV-1a 32 bit - fast, stable, and plenty for "did the content change?" checks.
 function hashString(str) {
@@ -121,7 +149,6 @@ function hashString(str) {
   return (hash >>> 0).toString(16);
 }
 
-// Changing this shape? admin.html mirrors this function so both pages agree on a fingerprint.
 function dataFingerprint(decks, matches) {
   return hashString(JSON.stringify(decks)) + '.' + hashString(JSON.stringify(matches));
 }
@@ -149,14 +176,11 @@ function writeCache(decks, matches) {
   localStorage.setItem(CACHE_KEY_DECKS, JSON.stringify(decks));
   localStorage.setItem(CACHE_KEY_MATCHES, JSON.stringify(matches));
   localStorage.setItem(CACHE_KEY_FINGERPRINT, dataFingerprint(decks, matches));
-  localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
 }
 
-/* --- GitHub Pages data source --- */
-
-// The rotating ?t= value changes on every DATA_REFRESH_MS boundary. GitHub Pages caches files
-// at its edge for 10 minutes, so changing the query value guarantees we are handed the current
-// file rather than a cached copy - and it needs no API call, no token and no quota.
+// The ?t= value changes on every DATA_REFRESH_MS boundary. GitHub Pages caches files at its
+// edge for 10 minutes, so a new query value guarantees the current file rather than a cached
+// copy, with no API call and no token.
 function dataFileUrl(fileName) {
   const bucket = Math.floor(Date.now() / DATA_REFRESH_MS);
   return `${GITHUB_DATA_BASE}${fileName}?t=${bucket}`;
@@ -179,68 +203,52 @@ async function fetchDatabaseFiles() {
   };
 }
 
-async function loadDatabase(forceRefresh = false) {
+async function loadDatabase() {
   const loadingEl = document.getElementById('loading');
-  const cached = forceRefresh ? null : readCache();
+  const cached = readCache();
 
-  if (forceRefresh) setSyncStatus('Checking...');
-
-  // Cached data paints instantly; whether it is still current is verified in the background.
+  // Cached data paints instantly; whether it is still current is checked in the background.
   if (cached) {
     loadingEl.style.display = 'none';
     rawDecks = cached.decks;
     rawMatches = cached.matches;
     refreshActiveView();
-    updateSyncStatus();
     scheduleAutoRefresh();
     revalidateInBackground(true);
-    return true;
+    return;
   }
 
   loadingEl.style.display = 'block';
   loadingEl.innerText = 'Loading EDH Nexus database...';
 
   try {
-    // Stamp first, then data: storing a revision that is older than the copy we hold is safe
-    // (worst case one extra check later), storing a newer one could hide a change.
-    const remoteRevision = await fetchRemoteRevision();
-    const data = await fetchDatabaseFromCloud(remoteRevision);
+    const data = await fetchDatabaseFiles();
     writeCache(data.decks, data.matches);
-
-    if (remoteRevision !== null) localStorage.setItem(REMOTE_REVISION_KEY, remoteRevision);
-
     reapplyActiveView();
-    updateSyncStatus();
     scheduleAutoRefresh();
-    return true;
   } catch (err) {
     console.error(err);
-    if (rawDecks.length > 0 || rawMatches.length > 0) {
-      setSyncStatus('Offline - showing cached data', true);
-    } else {
-      loadingEl.innerText = 'Error loading EDH Nexus data.';
-    }
-    return false;
+    loadingEl.innerText = 'Error loading EDH Nexus data.';
   }
 }
 
-// Re-checks the cloud periodically, but only while the tab is open and visible, so a parked
-// device or a background tab never spends data on polling.
+// Re-checks periodically, but only while the tab is open and visible, so a parked device
+// or a background tab never spends data on polling.
 function scheduleAutoRefresh() {
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
   autoRefreshTimer = setInterval(() => revalidateInBackground(), REVALIDATE_POLL_MS);
 }
 
-// The most useful moment to check for changes is right when someone looks at the app again.
 function registerSyncListeners() {
+  // The best moment to check for changes is when someone looks at the app again.
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) revalidateInBackground();
   });
 
   window.addEventListener('focus', () => revalidateInBackground());
 
-  // Another tab on this device (the admin portal) has just saved: pick it up with no network.
-  // Debounced so the burst of cache writes is read once, and only when fully written.
+  // Another tab on this device refreshed the cache: pick it up with no network. Debounced so
+  // a burst of cache writes is read once, after the last one has landed.
   window.addEventListener('storage', event => {
     if (event.key !== CACHE_KEY_DECKS && event.key !== CACHE_KEY_MATCHES) return;
 
@@ -248,101 +256,55 @@ function registerSyncListeners() {
     storageSyncTimer = setTimeout(() => {
       const cached = readCache();
       if (!cached) return;
+
       rawDecks = cached.decks;
       rawMatches = cached.matches;
       reapplyActiveView();
-      updateSyncStatus();
     }, 50);
   });
 }
 
-// Reads the optional revision stamp bin. Returns null when it is not configured or unreadable -
-// callers treat null as "no shortcut available", and fall back to fetching the files directly.
-async function fetchRemoteRevision() {
-  if (!SYNC_BIN_ID) return null;
-
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC_BIN_ID}/latest`, {
-      headers: JSONBIN_API_KEY ? { 'X-Master-Key': JSONBIN_API_KEY } : {},
-      cache: 'no-store'
-    });
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const revision = data.record ? data.record.revision : null;
-    return revision === undefined || revision === null ? null : String(revision);
-  } catch (e) {
-    return null;
-  }
-}
-
-// Fetches the actual dataset. Only GitHub Pages is supported here; remoteRevision is unused
-// since dataFileUrl()'s own cache-busting bucket already guarantees a fresh copy.
-async function fetchDatabaseFromCloud(remoteRevision) {
-  return fetchDatabaseFiles();
-}
-
-// GitHub Pages has no request quota, so a background sync is never blocked by a daily budget -
-// kept as a real function (rather than removed outright) since forceRefresh() and
-// revalidateInBackground() both call it.
-function budgetExhausted() {
-  return false;
-}
-
-// Checks the cloud and refreshes the cache + screen ONLY when something actually changed.
-// Returns true when fresh data was applied.
-async function revalidateInBackground(skipThrottle = false, manual = false) {
-  if (revalidateInFlight) return false;
-  if (document.hidden) return false;
-
-  // Quota guard: automatic checks stop once this device has spent its daily allowance.
-  if (!manual && budgetExhausted()) {
-    setSyncStatus('Daily check limit reached');
-    return false;
-  }
+// Fetches the published data and refreshes the cache and screen only if it changed.
+async function revalidateInBackground(skipThrottle = false) {
+  if (revalidateInFlight || document.hidden) return;
 
   const now = Date.now();
-  if (!skipThrottle && (now - lastRevalidateAt) < REVALIDATE_MIN_INTERVAL_MS) return false;
+  if (!skipThrottle && (now - lastRevalidateAt) < REVALIDATE_MIN_INTERVAL_MS) return;
 
   revalidateInFlight = true;
   lastRevalidateAt = now;
 
   try {
-    const remoteRevision = await fetchRemoteRevision();
-
-    // An unchanged revision means nothing was written anywhere, so the datasets (and, on
-    // GitHub, the JSON files) are not requested at all.
-    if (remoteRevision !== null && remoteRevision === localStorage.getItem(REMOTE_REVISION_KEY)) {
-      setSyncStatus('Up to date');
-      return false;
-    }
-
-    setSyncStatus('Checking...');
-    const data = await fetchDatabaseFromCloud(remoteRevision);
+    const data = await fetchDatabaseFiles();
     const freshFingerprint = dataFingerprint(data.decks, data.matches);
 
-    if (remoteRevision !== null) localStorage.setItem(REMOTE_REVISION_KEY, remoteRevision);
-
-    // Identical content: keep the cache and the rendered screen exactly as they are.
-    if (freshFingerprint === (localStorage.getItem(CACHE_KEY_FINGERPRINT) || '')) {
-      setSyncStatus('Up to date');
-      return false;
-    }
+    // Identical content: leave the cache and the rendered screen alone.
+    if (freshFingerprint === (localStorage.getItem(CACHE_KEY_FINGERPRINT) || '')) return;
 
     writeCache(data.decks, data.matches);
     reapplyActiveView();
-    updateSyncStatus();
-    return true;
   } catch (err) {
     console.error('Background sync failed:', err);
-    setSyncStatus('Offline - showing cached data', true);
-    return false;
   } finally {
     revalidateInFlight = false;
   }
 }
 
-// Re-renders the current screen while keeping the user's place (same tab/player/deck).
+/* ============================================================================
+   VIEWS
+   ============================================================================ */
+
+// Draws the current tab from scratch. Used for the first paint from the cache.
+function refreshActiveView() {
+  if (activeTab === 'leaderboard') {
+    renderLeaderboard();
+  } else {
+    showPlayerSelection();
+  }
+}
+
+// Re-renders the current screen after new data arrives, keeping the user's place
+// (same tab, same player, same deck).
 function reapplyActiveView() {
   if (activeTab === 'leaderboard') {
     renderLeaderboard();
@@ -369,480 +331,11 @@ function reapplyActiveView() {
   renderDashboard(playerProcessedDecks[restoredIndex]);
 }
 
-/* --- sync status chip --- */
-
-function formatRelativeTime(timestamp) {
-  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
-  if (seconds < 45) return 'just now';
-
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return minutes + ' min ago';
-
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
-
-  const days = Math.round(hours / 24);
-  return days + (days === 1 ? ' day ago' : ' days ago');
-}
-
-function syncTooltip() {
-  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
-  const lastChange = lastFetch ? 'Last new data: ' + formatRelativeTime(lastFetch) + '. ' : '';
-  return lastChange + 'Reading from GitHub Pages - no accounts, keys or request quota. Click to check now.';
-}
-
-function setSyncStatus(text, isError = false) {
-  const el = document.getElementById('syncStatus');
-  if (!el) return;
-  el.innerText = text;
-  el.classList.toggle('error', !!isError);
-  el.title = syncTooltip();
-}
-
-function updateSyncStatus() {
-  const lastFetch = parseInt(localStorage.getItem(LAST_FETCH_KEY) || '0', 10);
-  if (!lastFetch) {
-    setSyncStatus('Not synced');
-    return;
-  }
-  setSyncStatus('Updated ' + formatRelativeTime(lastFetch));
-}
-
-// Manual check, triggered by clicking the status chip. A deliberate click ignores both the
-// throttle and the daily budget, but it still counts against the quota.
-async function forceRefresh() {
-  lastRevalidateAt = 0;
-  const changed = await revalidateInBackground(true, true);
-  if (!changed) setSyncStatus(budgetExhausted() ? 'Up to date (daily limit reached)' : 'Up to date');
-  return changed;
-}
-
-function showPlayerSelection() {
-  activePlayerName = '';
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('historyCard').style.display = 'none';
-  document.getElementById('backToPlayersBtn').style.display = 'none';
-  document.getElementById('selectDeckBtn').style.display = 'none';
-  document.getElementById('leaderboardView').style.display = 'none';
-
-  const selectionView = document.getElementById('playerSelectionView');
-  const playerGrid = document.getElementById('playerGrid');
-  playerGrid.innerHTML = '';
-
-  const uniquePlayers = [...new Set(rawDecks.map(d => d.player))].sort();
-
-  uniquePlayers.forEach(player => {
-    const processedDecks = processPlayerData(player);
-    const topDeck = processedDecks.length > 0 ? processedDecks[0] : null;
-
-    const playerMatches = rawMatches.filter(m =>
-      m.players && m.players.some(p => p.player.toLowerCase() === player.toLowerCase())
-    );
-
-    const totalGames = playerMatches.length;
-    const wins = playerMatches.filter(m => {
-      const pEntry = m.players.find(p => p.player.toLowerCase() === player.toLowerCase());
-      return pEntry && Number(pEntry.position) === 1;
-    }).length;
-
-    const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) + '%' : '0.0%';
-
-    // Extract Scryfall art_crop URL
-    const artCropUrl = toArtCrop(topDeck ? (topDeck.artUrl1 || svgPlaceholder) : svgPlaceholder);
-
-    const commanderTitle = topDeck ? topDeck.commander1 : 'No Deck Selected';
-    const manaIconsHTML = topDeck ? renderManaSymbols(topDeck.colorIdentity) : '';
-
-    const card = document.createElement('div');
-    card.className = 'player-card';
-    card.onclick = () => selectPlayer(player);
-
-    card.innerHTML = `     
-      <div class="card-left-column" style="background-image: url('${artCropUrl}')">
-        <div class="card-left-info">
-            <div class="player-name-title">${player}</div>
-            <div class="player-mana-row">${manaIconsHTML}</div>
-        </div>
-      </div>  
-
-      <div class="card-right-column">
-        <div class="card-right-stats">
-            <div class="stat-box">
-              <span class="stat-value">${totalGames}</span>
-              <span class="stat-label">GAMES</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-box">
-              <span class="stat-value win-color">${winRate}</span>
-              <span class="stat-label">WIN RATE</span>
-            </div>
-        </div>
-      </div>
-    `;
-
-    playerGrid.appendChild(card);
-  });
-
-  selectionView.style.display = 'block';
-}
-
-function selectPlayer(playerName) {
-  activePlayerName = playerName;
-  activeTab = 'players';
-  updateTabButtons();
-  document.getElementById('playerSelectionView').style.display = 'none';
-  document.getElementById('leaderboardView').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('loading').innerText = `Calculating stats for ${playerName}...`;
-
-  playerProcessedDecks = processPlayerData(playerName);
-  selectedDeckIndex = 0;
-
-  document.getElementById('backToPlayersBtn').style.display = 'inline-flex';
-  document.getElementById('selectDeckBtn').style.display = 'inline-flex';
-  document.getElementById('selectDeckBtn').disabled = false;
-
-  renderDashboard(playerProcessedDecks[0]);
-}
-
-function openDeckModal() {
-  if (!activePlayerName) return;
-
-  document.getElementById('modalTitle').innerText = `${activePlayerName}'s Decks`;
-  document.getElementById('deckSearchInput').value = '';
-
-  renderDeckGrid(playerProcessedDecks);
-  document.getElementById('deckModal').style.display = 'flex';
-  document.getElementById('deckSearchInput').focus();
-}
-
-function closeDeckModal() {
-  document.getElementById('deckModal').style.display = 'none';
-}
-
-function togglePartnerStack() {
-  const container = document.getElementById('artContainer');
-  if (container.classList.contains('has-partner')) {
-    container.classList.toggle('swapped');
-  }
-}
-
-function renderDeckGrid(decks) {
-  const grid = document.getElementById('deckGrid');
-  grid.innerHTML = '';
-
-  if (decks.length === 0) {
-    grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 20px;">No matching decks found.</div>';
-    return;
-  }
-
-  decks.forEach((deck) => {
-    const realIndex = playerProcessedDecks.indexOf(deck);
-    const tile = document.createElement('div');
-    tile.className = `deck-tile ${realIndex === selectedDeckIndex ? 'active' : ''}`;
-    tile.onclick = () => selectDeckFromModal(realIndex);
-
-    const hasPartner = Boolean(deck.commander2 && deck.commander2 !== 'None' && deck.artUrl2);
-
-    const art1Src = deck.artUrl1;
-    const art2Src = deck.artUrl2;
-
-    let artHTML = '';
-    if (hasPartner) {
-      artHTML = `
-            <div class="tile-art-wrapper is-partner">
-              <img src="${art1Src}" class="partner-tile-art art-c1" alt="${deck.commander1}" onerror="this.onerror=null; this.src=svgPlaceholder;"/>
-              <img src="${art2Src}" class="partner-tile-art art-c2" alt="${deck.commander2}" onerror="this.onerror=null; this.src=svgPlaceholder;"/>
-            </div>
-          `;
-    } else {
-      artHTML = `
-            <div class="tile-art-wrapper">
-              <img src="${art1Src}" class="tile-art" alt="${deck.label}" onerror="this.onerror=null; this.src=svgPlaceholder;" />
-            </div>
-          `;
-    }
-
-    tile.innerHTML = `
-          ${artHTML}
-          <div class="tile-body">
-            <div class="deck-tile-title">${deck.label}</div>
-            <div class="deck-tile-footer">
-              ${renderManaSymbols(deck.colorIdentity)}
-              <span style="font-weight: 500;">${deck.totalGames} Games <span style="color: var(--win-color); font-weight: bold; margin-left: 2px;">(${deck.winRate})</span></span>
-            </div>
-          </div>
-        `;
-
-    grid.appendChild(tile);
-  });
-}
-
-function filterDeckGrid() {
-  const query = document.getElementById('deckSearchInput').value.toLowerCase().trim();
-  const filtered = playerProcessedDecks.filter(d =>
-    d.label.toLowerCase().includes(query) ||
-    d.commander1.toLowerCase().includes(query) ||
-    d.commander2.toLowerCase().includes(query) ||
-    d.colorIdentity.toLowerCase().includes(query)
-  );
-  renderDeckGrid(filtered);
-}
-
-function selectDeckFromModal(index) {
-  if (!playerProcessedDecks[index]) return;
-  selectedDeckIndex = index;
-  renderDashboard(playerProcessedDecks[index]);
-  closeDeckModal();
-}
-
-function processPlayerData(playerName) {
-  const targetPlayer = playerName.toLowerCase();
-  const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
-
-  const playerMatches = rawMatches.map(m => {
-    const entry = m.players ? m.players.find(p => p.player.toLowerCase() === targetPlayer) : null;
-    if (!entry) return null;
-
-    const matchKills = resolveMatchKills(m);
-    const seatIdx = m.players.indexOf(entry);
-    const selfKill = matchKills.selfKills[seatIdx] || 0;
-
-    return {
-      gameId: m.gameId,
-      date: m.date,
-      commander: entry.commander,
-      position: entry.position,
-      kills: matchKills.kills[seatIdx] || 0,
-      selfKill: selfKill,
-      killedBy: selfKill ? '' : (entry.killedBy || ''),
-      killedByCommander: selfKill ? '' : (entry.killedByCommander || ''),
-      pod: m.players,
-      podKills: matchKills.kills,
-      podSelfKills: matchKills.selfKills
-    };
-  }).filter(m => m !== null);
-
-  const processed = playerDecks.map(deck => {
-    const c1 = deck.commander1 ? deck.commander1.trim() : (deck.commander || '');
-    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
-    const hasPartner = c2 !== '';
-    const combinedLabel = deck.label || (hasPartner ? `${c1} & ${c2}` : c1);
-
-    const extractedArt1 = getArtUrl(deck, 'artUrl1', ['artUrl', 'image', 'art_url', 'scryfallCrop', 'commanderArt1']);
-    const extractedArt2 = getArtUrl(deck, 'artUrl2', ['artUrl2', 'image2', 'art_url2', 'scryfallCrop2', 'commanderArt2']);
-
-    const art1 = extractedArt1 || svgPlaceholder;
-    const art2 = extractedArt2 || '';
-
-    const deckMatches = playerMatches.filter(m => {
-      const logged = m.commander.toLowerCase().trim();
-      return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
-    });
-
-    const totalGames = deckMatches.length;
-    const wins = deckMatches.filter(m => Number(m.position) === 1).length;
-    const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-
-    let posSum = 0;
-    let killSum = 0;
-    let selfKillSum = 0;
-    deckMatches.forEach(m => {
-      posSum += Number(m.position || 0);
-      killSum += Number(m.kills || 0);
-      selfKillSum += Number(m.selfKill || 0);
-    });
-
-    return {
-      commander1: c1,
-      commander2: c2,
-      label: combinedLabel,
-      artUrl1: art1,
-      artUrl2: art2,
-      colorIdentity: deck.colorIdentity || 'C',
-      theme: deck.theme || 'N/A',
-      totalGames: totalGames,
-      wins: wins,
-      kills: killSum,
-      selfKills: selfKillSum,
-      winRateNum: winRateNum,
-      winsLosses: `${wins} / ${totalGames - wins}`,
-      winRate: winRateNum.toFixed(1) + '%',
-      avgPos: totalGames > 0 ? (posSum / totalGames).toFixed(1) : 'N/A',
-      recentMatches: deckMatches.slice(-5).reverse()
-    };
-  });
-
-  const sortedByGames = [...processed].sort((a, b) => {
-    if (b.totalGames === a.totalGames) return b.winRateNum - a.winRateNum;
-    return b.totalGames - a.totalGames;
-  });
-
-  const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : (processed[0] || null);
-
-  const overallGames = playerMatches.length;
-  const overallWins = playerMatches.filter(m => Number(m.position) === 1).length;
-  let overallPosSum = 0;
-  let overallKills = 0;
-  let overallSelfKills = 0;
-  playerMatches.forEach(m => {
-    overallPosSum += Number(m.position || 0);
-    overallKills += Number(m.kills || 0);
-    overallSelfKills += Number(m.selfKill || 0);
-  });
-
-  const overallProfile = {
-    isOverall: true,
-    commander1: topDeck ? topDeck.commander1 : `${playerName}'s Career`,
-    commander2: topDeck ? topDeck.commander2 : '',
-    label: 'Overall Player Profile',
-    artUrl1: topDeck ? topDeck.artUrl1 : svgPlaceholder,
-    artUrl2: topDeck ? topDeck.artUrl2 : '',
-    colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG',
-    theme: topDeck ? `Most Played: ${topDeck.label}` : `${processed.length} Decks Registered`,
-    totalGames: overallGames,
-    kills: overallKills,
-    selfKills: overallSelfKills,
-    winsLosses: `${overallWins} / ${overallGames - overallWins}`,
-    winRate: overallGames > 0 ? ((overallWins / overallGames) * 100).toFixed(1) + '%' : '0%',
-    avgPos: overallGames > 0 ? (overallPosSum / overallGames).toFixed(1) : 'N/A',
-    recentMatches: playerMatches.slice(-5).reverse()
-  };
-
-  return [overallProfile, ...processed];
-}
-
-function renderDashboard(data) {
-  const cardHeader = document.getElementById('commanderCardHeader');
-  const artContainer = document.getElementById('artContainer');
-  const art1 = document.getElementById('commanderArt1');
-  const art2 = document.getElementById('commanderArt2');
-
-  artContainer.classList.remove('swapped');
-
-  if (data.isOverall) {
-    cardHeader.innerText = 'Career Profile (Most Played)';
-    art1.src = data.artUrl1 || svgPlaceholder;
-
-    if (data.commander2 && data.artUrl2) {
-      art2.src = data.artUrl2 || svgPlaceholder;
-      art2.style.display = 'block';
-      artContainer.classList.add('has-partner');
-      art1.className = 'stacked-card partner-c1';
-    } else {
-      art2.style.display = 'none';
-      artContainer.classList.remove('has-partner');
-      art1.className = 'single-art';
-    }
-  } else {
-    cardHeader.innerText = 'Active Commander';
-    art1.src = data.artUrl1 || svgPlaceholder;
-
-    if (data.commander2 && data.artUrl2) {
-      art2.src = data.artUrl2 || svgPlaceholder;
-      art2.style.display = 'block';
-      artContainer.classList.add('has-partner');
-      art1.className = 'stacked-card partner-c1';
-    } else {
-      art2.style.display = 'none';
-      artContainer.classList.remove('has-partner');
-      art1.className = 'single-art';
-    }
-  }
-
-  document.getElementById('colorIdentityDisplay').innerHTML = renderManaSymbols(data.colorIdentity);
-  document.getElementById('totalGames').innerText = data.totalGames;
-
-  const killsEl = document.getElementById('totalKills');
-  if (killsEl) {
-    const kills = Number(data.kills || 0);
-    const selfKills = Number(data.selfKills || 0);
-    const notes = [];
-    if (data.totalGames > 0) notes.push(`${(kills / data.totalGames).toFixed(1)}/game`);
-    if (selfKills > 0) notes.push(`${selfKills} self`);
-
-    killsEl.innerHTML = notes.length
-      ? `${kills}<span class="stat-sub">${notes.join(' - ')}</span>`
-      : String(kills);
-  }
-
-  document.getElementById('winsLosses').innerText = data.winsLosses;
-  document.getElementById('winRate').innerText = data.winRate;
-  document.getElementById('avgPos').innerText = data.avgPos;
-
-  const tbody = document.getElementById('matchHistoryRows');
-  tbody.innerHTML = '';
-  if (!data.recentMatches || data.recentMatches.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); padding: 12px;">No matches recorded yet.</td></tr>';
-  } else {
-    const targetPlayer = activePlayerName.toLowerCase();
-    data.recentMatches.forEach(m => {
-      const row = document.createElement('tr');
-      const posClass = m.position == 1 ? 'badge-win' : 'badge-loss';
-      const posText = m.position == 1 ? '1st' : `${m.position}th`;
-
-      const opponentsHTML = m.pod
-        .filter(p => p.player.toLowerCase() !== targetPlayer)
-        .map(p => {
-          const seat = m.pod.indexOf(p);
-          const podKills = m.podKills ? (m.podKills[seat] || 0) : 0;
-          const killTag = podKills > 0
-            ? ` <span style="color: var(--accent-hover); font-weight: 700;">${podKills}K</span>`
-            : '';
-          const selfTag = m.podSelfKills && m.podSelfKills[seat]
-            ? ` <span style="color: var(--loss-color); font-weight: 700;" title="Took themselves out">self</span>`
-            : '';
-          return `<span style="display:inline-block; margin-right: 10px; font-size: 0.85rem;"><strong>${p.position}th:</strong> ${escapeHTML(p.player)} (<em>${escapeHTML(p.commander)}</em>)${killTag}${selfTag}</span>`;
-        })
-        .join(' ');
-
-      const outNote = m.selfKill ? 'self-KO' : (m.killedBy ? `out to ${m.killedBy}` : '');
-      const knockedOut = outNote
-        ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${escapeHTML(outNote)}</div>`
-        : '';
-
-      row.innerHTML = `
-            <td style="padding: 8px; color: var(--text-muted); font-size: 0.85rem;">${m.date || 'N/A'}</td>
-            <td style="padding: 8px; font-weight: bold;">${escapeHTML(m.commander)}</td>
-            <td style="padding: 8px;"><span class="${posClass}">${posText}</span>${knockedOut}</td>
-            <td style="padding: 8px; font-weight: 700;">${Number(m.kills || 0)}</td>
-            <td style="padding: 8px; color: var(--text-main);">${opponentsHTML}</td>
-          `;
-      tbody.appendChild(row);
-    });
-  }
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'grid';
-  document.getElementById('historyCard').style.display = 'block';
-}
-
-window.onclick = function (event) {
-  const modal = document.getElementById('deckModal');
-  if (event.target === modal) {
-    closeDeckModal();
-  }
-}
-
-/* ============================================================================
-   TAB NAVIGATION (Players <-> Leaderboard)
-   ============================================================================ */
-
 function updateTabButtons() {
   const playersBtn = document.getElementById('tabBtnPlayers');
   const leaderboardBtn = document.getElementById('tabBtnLeaderboard');
   if (playersBtn) playersBtn.classList.toggle('active', activeTab === 'players');
   if (leaderboardBtn) leaderboardBtn.classList.toggle('active', activeTab === 'leaderboard');
-}
-
-// Re-renders whichever tab is currently on screen (used after data loads/refreshes).
-function refreshActiveView() {
-  if (activeTab === 'leaderboard') {
-    renderLeaderboard();
-  } else {
-    showPlayerSelection();
-  }
 }
 
 function switchTab(tab) {
@@ -866,59 +359,384 @@ function switchTab(tab) {
   showPlayerSelection();
 }
 
-// Clicking a leaderboard row jumps straight into that player's dashboard.
-function openPlayerFromLeaderboard(playerName) {
-  activeTab = 'players';
-  updateTabButtons();
-  selectPlayer(playerName);
+/* ============================================================================
+   PLAYERS TAB
+   ============================================================================ */
+
+function showPlayerSelection() {
+  activePlayerName = '';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('historyCard').style.display = 'none';
+  document.getElementById('backToPlayersBtn').style.display = 'none';
+  document.getElementById('selectDeckBtn').style.display = 'none';
+  document.getElementById('leaderboardView').style.display = 'none';
+
+  const playerGrid = document.getElementById('playerGrid');
+  playerGrid.innerHTML = '';
+
+  const uniquePlayers = [...new Set(rawDecks.map(d => d.player))].sort();
+
+  uniquePlayers.forEach(player => {
+    // The first entry is the player's overall profile, which carries their most-played art.
+    const profile = processPlayerData(player)[0];
+    const artCropUrl = toArtCrop(profile.artUrl1 || svgPlaceholder);
+
+    const card = document.createElement('div');
+    card.className = 'playerCard';
+    card.onclick = () => selectPlayer(player);
+
+    card.innerHTML = `
+      <div class="card-left-column" style="background-image: url('${artCropUrl}')">
+        <div class="card-left-info">
+            <div class="player-name-title">${player}</div>
+            <div class="playerManaRow">${renderManaSymbols(profile.colorIdentity)}</div>
+        </div>
+      </div>
+
+      <div class="card-right-column">
+        <div class="card-right-stats">
+            <div class="stat-box">
+              <span class="stat-value">${profile.totalGames}</span>
+              <span class="stat-label">GAMES</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-box">
+              <span class="stat-value win-color">${profile.winRate}</span>
+              <span class="stat-label">WIN RATE</span>
+            </div>
+        </div>
+      </div>
+    `;
+
+    playerGrid.appendChild(card);
+  });
+
+  document.getElementById('playerSelectionView').style.display = 'block';
 }
 
-// Clicking a deck row opens the owning player's dashboard with that deck selected.
-function openDeckFromLeaderboard(playerName, deckLabel) {
+function selectPlayer(playerName) {
+  activePlayerName = playerName;
   activeTab = 'players';
   updateTabButtons();
-  selectPlayer(playerName);
+  document.getElementById('playerSelectionView').style.display = 'none';
+  document.getElementById('leaderboardView').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('loading').innerText = `Calculating stats for ${playerName}...`;
 
-  const idx = playerProcessedDecks.findIndex(d =>
-    !d.isOverall && d.label.toLowerCase() === String(deckLabel).toLowerCase()
-  );
+  playerProcessedDecks = processPlayerData(playerName);
+  selectedDeckIndex = 0;
 
-  if (idx > -1) {
-    selectedDeckIndex = idx;
-    renderDashboard(playerProcessedDecks[idx]);
+  document.getElementById('backToPlayersBtn').style.display = 'inline-flex';
+  document.getElementById('selectDeckBtn').style.display = 'inline-flex';
+  document.getElementById('selectDeckBtn').disabled = false;
+
+  renderDashboard(playerProcessedDecks[0]);
+}
+
+function togglePartnerStack() {
+  const container = document.getElementById('artContainer');
+  if (container.classList.contains('has-partner')) {
+    container.classList.toggle('swapped');
   }
 }
 
+/* --- deck picker modal --- */
+
+function openDeckModal() {
+  if (!activePlayerName) return;
+
+  document.getElementById('modalTitle').innerText = `${activePlayerName}'s Decks`;
+  document.getElementById('deckSearchInput').value = '';
+
+  renderDeckGrid(playerProcessedDecks);
+  document.getElementById('deckModal').style.display = 'flex';
+  document.getElementById('deckSearchInput').focus();
+}
+
+function closeDeckModal() {
+  document.getElementById('deckModal').style.display = 'none';
+}
+
+// Clicking the dimmed backdrop closes the modal.
+window.onclick = function (event) {
+  if (event.target === document.getElementById('deckModal')) closeDeckModal();
+};
+
+function renderDeckGrid(decks) {
+  const grid = document.getElementById('deckGrid');
+  grid.innerHTML = '';
+
+  if (decks.length === 0) {
+    grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 20px;">No matching decks found.</div>';
+    return;
+  }
+
+  decks.forEach(deck => {
+    const realIndex = playerProcessedDecks.indexOf(deck);
+    const tile = document.createElement('div');
+    tile.className = `deck-tile ${realIndex === selectedDeckIndex ? 'active' : ''}`;
+    tile.onclick = () => selectDeckFromModal(realIndex);
+
+    const hasPartner = Boolean(deck.commander2 && deck.commander2 !== 'None' && deck.artUrl2);
+    const fallback = 'onerror="this.onerror=null; this.src=svgPlaceholder;"';
+
+    const artHTML = hasPartner
+      ? `
+        <div class="tile-art-wrapper is-partner">
+          <img src="${deck.artUrl1}" class="partner-tile-art art-c1" alt="${deck.commander1}" ${fallback}/>
+          <img src="${deck.artUrl2}" class="partner-tile-art art-c2" alt="${deck.commander2}" ${fallback}/>
+        </div>`
+      : `
+        <div class="tile-art-wrapper">
+          <img src="${deck.artUrl1}" class="tile-art" alt="${deck.label}" ${fallback}/>
+        </div>`;
+
+    tile.innerHTML = `
+      ${artHTML}
+      <div class="tile-body">
+        <div class="deck-tile-title">${deck.label}</div>
+        <div class="deck-tile-footer">
+          ${renderManaSymbols(deck.colorIdentity)}
+          <span style="font-weight: 500;">${deck.totalGames} Games <span style="color: var(--win-color); font-weight: bold; margin-left: 2px;">(${deck.winRate})</span></span>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(tile);
+  });
+}
+
+function filterDeckGrid() {
+  const query = document.getElementById('deckSearchInput').value.toLowerCase().trim();
+  const filtered = playerProcessedDecks.filter(d =>
+    d.label.toLowerCase().includes(query) ||
+    d.commander1.toLowerCase().includes(query) ||
+    d.commander2.toLowerCase().includes(query) ||
+    d.colorIdentity.toLowerCase().includes(query)
+  );
+  renderDeckGrid(filtered);
+}
+
+function selectDeckFromModal(index) {
+  if (!playerProcessedDecks[index]) return;
+  selectedDeckIndex = index;
+  renderDashboard(playerProcessedDecks[index]);
+  closeDeckModal();
+}
+
 /* ============================================================================
-   LEADERBOARD STATS
-   Aggregated from the very same rawDecks / rawMatches data the dashboard uses.
+   PLAYER STATS
    ============================================================================ */
 
-function toArtCrop(url) {
-  if (!url || typeof url !== 'string') return '';
-  return url.replace('/grid/', '/art/').replace('/normal/', '/art/').replace('/large/', '/art/');
+// Totals for a list of a player's matches (one deck's, or all of them).
+function summarizeMatches(matches) {
+  const totalGames = matches.length;
+  const wins = matches.filter(m => Number(m.position) === 1).length;
+
+  let posSum = 0;
+  let kills = 0;
+  let selfKills = 0;
+  let firstBloods = 0;
+  matches.forEach(m => {
+    posSum += Number(m.position || 0);
+    kills += Number(m.kills || 0);
+    selfKills += Number(m.selfKill || 0);
+    if (m.gotFirstBlood) firstBloods += 1;
+  });
+
+  const winRateNum = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+
+  return {
+    totalGames: totalGames,
+    wins: wins,
+    kills: kills,
+    selfKills: selfKills,
+    firstBloods: firstBloods,
+    winRateNum: winRateNum,
+    winsLosses: `${wins} / ${totalGames - wins}`,
+    winRate: winRateNum.toFixed(1) + '%',
+    avgPos: totalGames > 0 ? (posSum / totalGames).toFixed(1) : 'N/A',
+    recentMatches: matches.slice(-5).reverse()
+  };
 }
 
-function escapeHTML(value) {
-  return String(value === undefined || value === null ? '' : value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+// Returns the player's overall profile first, followed by one entry per registered deck.
+function processPlayerData(playerName) {
+  const targetPlayer = playerName.toLowerCase();
+  const playerDecks = rawDecks.filter(d => d.player.toLowerCase() === targetPlayer);
+
+  const playerMatches = rawMatches.map(m => {
+    const seatIdx = Array.isArray(m.players)
+      ? m.players.findIndex(p => p.player.toLowerCase() === targetPlayer)
+      : -1;
+    if (seatIdx === -1) return null;
+
+    const entry = m.players[seatIdx];
+    const matchKills = resolveMatchKills(m);
+    const selfKill = matchKills.selfKills[seatIdx] || 0;
+
+    return {
+      gameId: m.gameId,
+      date: m.date,
+      commander: entry.commander,
+      position: entry.position,
+      kills: matchKills.kills[seatIdx] || 0,
+      selfKill: selfKill,
+      killedBy: selfKill ? '' : (entry.killedBy || ''),
+      killedByCommander: selfKill ? '' : (entry.killedByCommander || ''),
+      firstBlood: m.firstBlood || null,
+      gotFirstBlood: isFirstBloodFor(m.firstBlood, entry.player, entry.commander),
+      pod: m.players,
+      podKills: matchKills.kills,
+      podSelfKills: matchKills.selfKills
+    };
+  }).filter(Boolean);
+
+  const processed = playerDecks.map(deck => {
+    const c1 = deck.commander1 ? deck.commander1.trim() : (deck.commander || '');
+    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
+    const hasPartner = c2 !== '';
+    const combinedLabel = deck.label || (hasPartner ? `${c1} & ${c2}` : c1);
+
+    // A game can be logged under the combined label, the primary or the partner name.
+    const deckMatches = playerMatches.filter(m => {
+      const logged = m.commander.toLowerCase().trim();
+      return logged === c1.toLowerCase() || (hasPartner && logged === c2.toLowerCase()) || logged === combinedLabel.toLowerCase();
+    });
+
+    return Object.assign({
+      commander1: c1,
+      commander2: c2,
+      label: combinedLabel,
+      artUrl1: getArtUrl(deck, ART1_KEYS) || svgPlaceholder,
+      artUrl2: getArtUrl(deck, ART2_KEYS),
+      colorIdentity: deck.colorIdentity || 'C'
+    }, summarizeMatches(deckMatches));
+  });
+
+  // The overall profile borrows its artwork and colours from the most-played deck.
+  const sortedByGames = [...processed].sort((a, b) => {
+    if (b.totalGames === a.totalGames) return b.winRateNum - a.winRateNum;
+    return b.totalGames - a.totalGames;
+  });
+  const topDeck = sortedByGames.length > 0 && sortedByGames[0].totalGames > 0 ? sortedByGames[0] : (processed[0] || null);
+
+  const overallProfile = Object.assign({
+    isOverall: true,
+    commander1: topDeck ? topDeck.commander1 : `${playerName}'s Career`,
+    commander2: topDeck ? topDeck.commander2 : '',
+    label: 'Overall Player Profile',
+    artUrl1: topDeck ? topDeck.artUrl1 : svgPlaceholder,
+    artUrl2: topDeck ? topDeck.artUrl2 : '',
+    colorIdentity: topDeck ? topDeck.colorIdentity : 'WUBRG'
+  }, summarizeMatches(playerMatches));
+
+  return [overallProfile, ...processed];
 }
 
-// Makes a value safe to drop inside single quotes in an inline onclick attribute.
-function toJsString(value) {
-  const raw = String(value === undefined || value === null ? '' : value);
-  return escapeHTML(raw.replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+function renderDashboard(data) {
+  const artContainer = document.getElementById('artContainer');
+  const art1 = document.getElementById('commanderArt1');
+  const art2 = document.getElementById('commanderArt2');
+
+  document.getElementById('commanderCardHeader').innerText =
+    data.isOverall ? `${activePlayerName}'s Career Profile` : `${activePlayerName}'s Active Commander`;
+
+  artContainer.classList.remove('swapped');
+  art1.src = data.artUrl1 || svgPlaceholder;
+
+  if (data.commander2 && data.artUrl2) {
+    art2.src = data.artUrl2;
+    art2.style.display = 'block';
+    artContainer.classList.add('has-partner');
+    art1.className = 'stacked-card partner-c1';
+  } else {
+    art2.style.display = 'none';
+    artContainer.classList.remove('has-partner');
+    art1.className = 'single-art';
+  }
+
+  document.getElementById('colorIdentityDisplay').innerHTML = renderManaSymbols(data.colorIdentity);
+  document.getElementById('totalGames').innerText = data.totalGames;
+  document.getElementById('winsLosses').innerText = data.winsLosses;
+  document.getElementById('winRate').innerText = data.winRate;
+  document.getElementById('avgPos').innerText = data.avgPos;
+  document.getElementById('totalFirstBloods').innerText = Number(data.firstBloods || 0);
+
+  const kills = Number(data.kills || 0);
+  const killNotes = [];
+  if (data.totalGames > 0) killNotes.push(`${(kills / data.totalGames).toFixed(1)}/game`);
+  if (data.selfKills > 0) killNotes.push(`${data.selfKills} self`);
+
+  document.getElementById('totalKills').innerHTML = killNotes.length
+    ? `${kills}<span class="stat-sub">${killNotes.join(' - ')}</span>`
+    : String(kills);
+
+  renderMatchHistory(data.recentMatches);
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'grid';
+  document.getElementById('historyCard').style.display = 'block';
 }
 
-// Kills are recorded on the losing seat ("killedBy"), so they are counted back onto
-// the killer here. A seat that took itself out is a self-KO: it is reported
-// separately and credited to nobody. A match that predates elimination tracking
-// falls back to any plain kills number it carries, and to zero when it carries
-// neither. Returns { kills: [], selfKills: [] }, both indexed by seat.
+function renderMatchHistory(matches) {
+  const tbody = document.getElementById('matchHistoryRows');
+  tbody.innerHTML = '';
+
+  if (!matches || matches.length === 0) {
+    tbody.innerHTML = '<tr class="history-empty"><td colspan="5">No matches recorded yet.</td></tr>';
+    return;
+  }
+
+  const targetPlayer = activePlayerName.toLowerCase();
+  const firstBloodTag = ' <span style="color: #e8c547; font-weight: 700;" title="First Blood">FB</span>';
+
+  matches.forEach(m => {
+    const posClass = Number(m.position) === 1 ? 'badge-win' : 'badge-loss';
+
+    const opponentsHTML = m.pod
+      .filter(p => p.player.toLowerCase() !== targetPlayer)
+      .map(p => {
+        const seat = m.pod.indexOf(p);
+        const podKills = m.podKills ? (m.podKills[seat] || 0) : 0;
+        const killTag = podKills > 0
+          ? ` <span style="color: var(--accent-hover); font-weight: 700;">${podKills}K</span>`
+          : '';
+        const selfTag = m.podSelfKills && m.podSelfKills[seat]
+          ? ' <span style="color: var(--loss-color); font-weight: 700;" title="Took themselves out">self</span>'
+          : '';
+        const fbTag = isFirstBloodFor(m.firstBlood, p.player, p.commander) ? firstBloodTag : '';
+
+        return `<span class="hist-opp"><strong>${ordinal(p.position)}:</strong> ${escapeHTML(p.player)} (<em>${escapeHTML(p.commander)}</em>)${killTag}${selfTag}${fbTag}</span>`;
+      })
+      .join(' ');
+
+    const outNote = m.selfKill ? 'self-KO' : (m.killedBy ? `out to ${m.killedBy}` : '');
+    const knockedOut = outNote ? `<div class="hist-note">${escapeHTML(outNote)}</div>` : '';
+
+    // The data-label attributes are the field names shown when the table turns into cards on phones.
+    const row = document.createElement('tr');
+    row.className = 'history-row';
+    row.innerHTML = `
+      <td class="hist-date" data-label="Date">${m.date || 'N/A'}</td>
+      <td class="hist-commander" data-label="Commander">${escapeHTML(m.commander)}${m.gotFirstBlood ? firstBloodTag : ''}</td>
+      <td class="hist-finish" data-label="Finish"><span class="${posClass}">${ordinal(m.position)}</span>${knockedOut}</td>
+      <td class="hist-kills" data-label="Kills">${Number(m.kills || 0)}</td>
+      <td class="hist-opponents" data-label="Opponents &amp; Decks">${opponentsHTML}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+/* ============================================================================
+   KILLS AND FIRST BLOOD
+   ============================================================================ */
+
+// Kills are recorded on the losing seat ("killedBy") and counted back onto the killer here.
+// A seat that took itself out is a self-KO, reported separately and credited to nobody.
+// A match from before elimination tracking falls back to any plain kills number it carries,
+// or zero. Returns { kills: [], selfKills: [] }, both indexed by seat.
 function resolveMatchKills(match) {
   const players = (match && Array.isArray(match.players)) ? match.players : [];
   const stored = players.map(p => Number(p && p.kills) || 0);
@@ -950,7 +768,7 @@ function resolveMatchKills(match) {
       return;
     }
 
-    // Prefer the seat that matches both name and deck; fall back to the name alone.
+    // Prefer the seat matching both name and deck; fall back to the name alone.
     let killerIdx = players.findIndex((p, idx) => p && idx !== victimIdx &&
       String(p.player || '').toLowerCase() === killerName &&
       (!killerCommander || String(p.commander || '').toLowerCase() === killerCommander));
@@ -966,191 +784,21 @@ function resolveMatchKills(match) {
   return { kills: kills, selfKills: selfKills };
 }
 
-function buildLeaderboardStats() {
-  const playerMap = new Map();
-  const deckList = [];
-  const deckLookup = new Map();
-
-  // 1) Seed the deck standings with every registered deck so artwork/colours are available.
-  rawDecks.forEach(deck => {
-    const c1 = (deck.commander1 || deck.commander || '').trim();
-    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
-    const label = (deck.label || (c2 ? `${c1} & ${c2}` : c1)).trim();
-    const playerKey = (deck.player || '').toLowerCase();
-
-    if (deck.player && !playerMap.has(playerKey)) {
-      playerMap.set(playerKey, {
-        player: deck.player,
-        playerKey: playerKey,
-        games: 0,
-        wins: 0,
-        posSum: 0,
-        kills: 0,
-        selfKills: 0
-      });
-    }
-
-    const entry = {
-      player: deck.player,
-      playerKey: playerKey,
-      commander1: c1,
-      commander2: c2,
-      label: label,
-      colorIdentity: deck.colorIdentity || 'C',
-      artUrl1: getArtUrl(deck, 'artUrl1', ['artUrl', 'image', 'art_url', 'scryfallCrop', 'commanderArt1']),
-      artUrl2: c2 ? getArtUrl(deck, 'artUrl2', ['image2', 'art_url2', 'scryfallCrop2', 'commanderArt2']) : '',
-      games: 0,
-      wins: 0,
-      posSum: 0,
-      kills: 0,
-      selfKills: 0,
-      unregistered: false
-    };
-
-    deckList.push(entry);
-
-    // A logged commander can be the combined label, the primary or the partner name.
-    const names = [label, c1];
-    if (c2) names.push(c2);
-    names.filter(name => name).forEach(name => {
-      const key = `${playerKey}::${name.toLowerCase()}`;
-      if (!deckLookup.has(key)) deckLookup.set(key, entry);
-    });
-  });
-
-  // 2) Process matches (only update existing playerMap entries to ignore players without decks)
-  rawMatches.forEach(match => {
-    if (!match || !Array.isArray(match.players)) return;
-
-    const matchKills = resolveMatchKills(match);
-
-    match.players.forEach((p, seatIdx) => {
-      if (!p || !p.player) return;
-
-      const playerKey = p.player.toLowerCase();
-      const position = Number(p.position) || 0;
-      const kills = matchKills.kills[seatIdx] || 0;
-      const selfKills = matchKills.selfKills[seatIdx] || 0;
-
-      let playerEntry = playerMap.get(playerKey);
-      if (playerEntry) {
-        playerEntry.games += 1;
-        playerEntry.posSum += position;
-        playerEntry.kills += kills;
-        playerEntry.selfKills += selfKills;
-        if (position === 1) playerEntry.wins += 1;
-      }
-
-      const commanderName = (p.commander || '').trim();
-      const deckKey = `${playerKey}::${commanderName.toLowerCase()}`;
-
-      let deckEntry = deckLookup.get(deckKey);
-      if (!deckEntry) {
-        deckEntry = {
-          player: p.player,
-          playerKey: playerKey,
-          commander1: commanderName,
-          commander2: '',
-          label: commanderName,
-          colorIdentity: 'C',
-          artUrl1: '',
-          artUrl2: '',
-          games: 0,
-          wins: 0,
-          posSum: 0,
-          kills: 0,
-          selfKills: 0,
-          unregistered: true
-        };
-        deckList.push(deckEntry);
-        deckLookup.set(deckKey, deckEntry);
-      }
-      deckEntry.games += 1;
-      deckEntry.posSum += position;
-      deckEntry.kills += kills;
-      deckEntry.selfKills += selfKills;
-      if (position === 1) deckEntry.wins += 1;
-    });
-  });
-
-  const finalizeEntry = entry => {
-    entry.kills = entry.kills || 0;
-    entry.selfKills = entry.selfKills || 0;
-    entry.winRateNum = entry.games > 0 ? (entry.wins / entry.games) * 100 : 0;
-    entry.winRate = entry.winRateNum.toFixed(1) + '%';
-    entry.avgPosNum = entry.games > 0 ? entry.posSum / entry.games : 0;
-    entry.avgPos = entry.games > 0 ? entry.avgPosNum.toFixed(1) : 'N/A';
-    return entry;
-  };
-
-  deckList.forEach(finalizeEntry);
-
-  const players = Array.from(playerMap.values()).map(playerEntry => {
-    const ownDecks = deckList.filter(d => d.playerKey === playerEntry.playerKey);
-    const playedDecks = ownDecks
-      .filter(d => d.games >= 0)
-      .sort((a, b) => (b.games - a.games) || (b.wins - a.wins));
-    const signatureDeck = playedDecks[0] || ownDecks[0] || null;
-
-    return finalizeEntry(Object.assign(playerEntry, {
-      deckCount: ownDecks.length,
-      signatureDeck: signatureDeck ? signatureDeck.label : 'No deck registered',
-      colorIdentity: signatureDeck ? signatureDeck.colorIdentity : 'C',
-      artUrl1: signatureDeck ? signatureDeck.artUrl1 : ''
-    }));
-  });
-
-  return { players: players, decks: deckList };
-}
-
-// Every entry sharing the best score (ties included).
-function topEntries(entries, scoreFn, direction = 'desc', qualifier = null) {
-  const pool = entries.filter(entry => entry.games > 0 && (!qualifier || qualifier(entry)));
-  if (pool.length === 0) return [];
-
-  const best = pool.reduce((acc, entry) => {
-    const value = scoreFn(entry);
-    if (acc === null) return value;
-    return direction === 'asc' ? Math.min(acc, value) : Math.max(acc, value);
-  }, null);
-
-  return pool.filter(entry => scoreFn(entry) === best);
-}
-
-// Same as topEntries, but falls back to everyone when nobody meets the minimum games played.
-function pickAwardEntries(entries, scoreFn, direction = 'desc', minGames = MIN_GAMES_FOR_RANKING) {
-  const qualified = topEntries(entries, scoreFn, direction, entry => entry.games >= minGames);
-  if (qualified.length > 0) return { entries: qualified, fallback: false };
-  return { entries: topEntries(entries, scoreFn, direction), fallback: true };
-}
-
-// Orders either list by the active stat. Entries with no games played always sink
-// to the bottom, so an unplayed deck can never take the 0.0 "best average finish".
-function sortLeaderboardEntries(entries, sortKey) {
-  const def = SORT_DEFS[sortKey] || SORT_DEFS.wins;
-  const direction = def.direction === 'asc' ? 1 : -1;
-
-  return [...entries].sort((a, b) => {
-    if ((a.games > 0) !== (b.games > 0)) return a.games > 0 ? -1 : 1;
-
-    const diff = (def.value(a) - def.value(b)) * direction;
-    if (diff !== 0) return diff;
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    if (b.games !== a.games) return b.games - a.games;
-    return String(a.label || a.player).localeCompare(String(b.label || b.player));
-  });
+// Checks a player (and the commander they piloted, when known) against a match's stored
+// First Blood credit ({ player, commander }). Older data without a commander matches by name.
+function isFirstBloodFor(firstBlood, playerName, commanderName) {
+  if (!firstBlood || !firstBlood.player) return false;
+  if (String(firstBlood.player).toLowerCase() !== String(playerName || '').toLowerCase()) return false;
+  if (firstBlood.commander) {
+    return String(firstBlood.commander).toLowerCase() === String(commanderName || '').toLowerCase();
+  }
+  return true;
 }
 
 /* ============================================================================
-   LEADERBOARD RENDERING
-   The toolbar drives everything: Players/Decks chooses which list is ranked and
-   the sort buttons choose the order. The top three become podium tiles that
-   reuse the Players tab card language (art crop background, dark overlay, name
-   + mana row), and everyone below them lands in the standings table.
+   LEADERBOARD STATS
+   Aggregated from the same rawDecks / rawMatches the player dashboard uses.
    ============================================================================ */
-
-// Set to true to repeat the podium finishers at the top of the table as well.
-const PODIUM_IN_TABLE = false;
 
 const SORT_DEFS = {
   wins: {
@@ -1187,10 +835,157 @@ const SORT_DEFS = {
     value: entry => entry.kills,
     format: entry => String(entry.kills),
     phrase: entry => `${entry.kills} ${entry.kills === 1 ? 'Kill' : 'Kills'}`
+  },
+  firstBlood: {
+    column: 'First Blood',
+    direction: 'desc',
+    value: entry => entry.firstBloods,
+    format: entry => String(entry.firstBloods),
+    phrase: entry => `${entry.firstBloods} First Blood${entry.firstBloods === 1 ? '' : 's'}`
   }
 };
 
 const PODIUM_RANKS = ['1st', '2nd', '3rd'];
+
+// Set to true to repeat the podium finishers at the top of the table as well.
+const PODIUM_IN_TABLE = false;
+
+function buildLeaderboardStats() {
+  const playerMap = new Map();
+  const deckList = [];
+  const deckLookup = new Map();
+
+  const emptyTotals = () => ({ games: 0, wins: 0, posSum: 0, kills: 0, firstBloods: 0 });
+
+  // Seed the standings with every registered deck, so artwork and colours are available.
+  rawDecks.forEach(deck => {
+    const c1 = (deck.commander1 || deck.commander || '').trim();
+    const c2 = deck.commander2 && deck.commander2 !== 'None' ? deck.commander2.trim() : '';
+    const label = (deck.label || (c2 ? `${c1} & ${c2}` : c1)).trim();
+    const playerKey = (deck.player || '').toLowerCase();
+
+    if (deck.player && !playerMap.has(playerKey)) {
+      playerMap.set(playerKey, Object.assign({ player: deck.player, playerKey: playerKey }, emptyTotals()));
+    }
+
+    const entry = Object.assign({
+      player: deck.player,
+      playerKey: playerKey,
+      commander1: c1,
+      commander2: c2,
+      label: label,
+      colorIdentity: deck.colorIdentity || 'C',
+      artUrl1: getArtUrl(deck, ART1_KEYS),
+      artUrl2: c2 ? getArtUrl(deck, ART2_KEYS) : ''
+    }, emptyTotals());
+
+    deckList.push(entry);
+
+    // A logged commander can be the combined label, the primary or the partner name.
+    [label, c1, c2].filter(Boolean).forEach(name => {
+      const key = `${playerKey}::${name.toLowerCase()}`;
+      if (!deckLookup.has(key)) deckLookup.set(key, entry);
+    });
+  });
+
+  // Add up the matches. Players without a registered deck are not ranked as players, but a
+  // deck they piloted still gets its own entry in the deck standings.
+  rawMatches.forEach(match => {
+    if (!match || !Array.isArray(match.players)) return;
+
+    const matchKills = resolveMatchKills(match);
+
+    match.players.forEach((p, seatIdx) => {
+      if (!p || !p.player) return;
+
+      const playerKey = p.player.toLowerCase();
+      const position = Number(p.position) || 0;
+      const kills = matchKills.kills[seatIdx] || 0;
+      const commanderName = (p.commander || '').trim();
+      const firstBlood = isFirstBloodFor(match.firstBlood, p.player, commanderName) ? 1 : 0;
+
+      const addResult = totals => {
+        totals.games += 1;
+        totals.posSum += position;
+        totals.kills += kills;
+        totals.firstBloods += firstBlood;
+        if (position === 1) totals.wins += 1;
+      };
+
+      const playerEntry = playerMap.get(playerKey);
+      if (playerEntry) addResult(playerEntry);
+
+      const deckKey = `${playerKey}::${commanderName.toLowerCase()}`;
+      let deckEntry = deckLookup.get(deckKey);
+
+      if (!deckEntry) {
+        deckEntry = Object.assign({
+          player: p.player,
+          playerKey: playerKey,
+          commander1: commanderName,
+          commander2: '',
+          label: commanderName,
+          colorIdentity: 'C',
+          artUrl1: '',
+          artUrl2: ''
+        }, emptyTotals());
+        deckList.push(deckEntry);
+        deckLookup.set(deckKey, deckEntry);
+      }
+
+      addResult(deckEntry);
+    });
+  });
+
+  const finalizeEntry = entry => {
+    entry.winRateNum = entry.games > 0 ? (entry.wins / entry.games) * 100 : 0;
+    entry.winRate = entry.winRateNum.toFixed(1) + '%';
+    entry.avgPosNum = entry.games > 0 ? entry.posSum / entry.games : 0;
+    entry.avgPos = entry.games > 0 ? entry.avgPosNum.toFixed(1) : 'N/A';
+    return entry;
+  };
+
+  deckList.forEach(finalizeEntry);
+
+  // A player is represented by their most-played deck.
+  const players = Array.from(playerMap.values()).map(playerEntry => {
+    const ownDecks = deckList.filter(d => d.playerKey === playerEntry.playerKey);
+    const signatureDeck = [...ownDecks].sort((a, b) => (b.games - a.games) || (b.wins - a.wins))[0] || null;
+
+    return finalizeEntry(Object.assign(playerEntry, {
+      deckCount: ownDecks.length,
+      signatureDeck: signatureDeck ? signatureDeck.label : 'No deck registered',
+      colorIdentity: signatureDeck ? signatureDeck.colorIdentity : 'C',
+      artUrl1: signatureDeck ? signatureDeck.artUrl1 : ''
+    }));
+  });
+
+  return { players: players, decks: deckList };
+}
+
+// Orders entries by the active stat. Entries with no games always sink to the bottom, so an
+// unplayed deck can never take the 0.0 "best average finish".
+function sortLeaderboardEntries(entries, sortKey) {
+  const def = SORT_DEFS[sortKey] || SORT_DEFS.wins;
+  const direction = def.direction === 'asc' ? 1 : -1;
+
+  return [...entries].sort((a, b) => {
+    if ((a.games > 0) !== (b.games > 0)) return a.games > 0 ? -1 : 1;
+
+    const diff = (def.value(a) - def.value(b)) * direction;
+    if (diff !== 0) return diff;
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.games !== a.games) return b.games - a.games;
+    return String(a.label || a.player).localeCompare(String(b.label || b.player));
+  });
+}
+
+/* ============================================================================
+   LEADERBOARD TAB
+   The toolbar drives everything: Players/Decks picks which list is ranked and the sort
+   buttons pick the order. The top three become podium tiles (the same look as the Players
+   tab cards) and everyone below them lands in the standings table.
+   ============================================================================ */
 
 function setLeaderboardEntity(entity) {
   leaderboardEntity = entity === 'decks' ? 'decks' : 'players';
@@ -1205,14 +1000,14 @@ function setLeaderboardSort(sortKey) {
 function updateLeaderboardControls() {
   const entityBox = document.getElementById('entityControls');
   if (entityBox) {
-    Array.from(entityBox.querySelectorAll('.seg-btn')).forEach(btn => {
+    entityBox.querySelectorAll('.seg-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.entity === leaderboardEntity);
     });
   }
 
   const sortBox = document.getElementById('leaderboardSortControls');
   if (sortBox) {
-    Array.from(sortBox.querySelectorAll('.sort-btn')).forEach(btn => {
+    sortBox.querySelectorAll('.sort-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.sort === leaderboardSort);
     });
   }
@@ -1222,14 +1017,12 @@ function renderLeaderboard() {
   const podiumEl = document.getElementById('leaderboardPodium');
   const headEl = document.getElementById('leaderboardHead');
   const bodyEl = document.getElementById('leaderboardRows');
-  const recordsEl = document.getElementById('leaderboardRecords');
   if (!podiumEl || !headEl || !bodyEl) return;
 
   updateLeaderboardControls();
 
   if (rawDecks.length === 0 && rawMatches.length === 0) {
     podiumEl.innerHTML = '<div class="podium-empty">No match data logged yet.</div>';
-    if (recordsEl) recordsEl.innerHTML = '';
     headEl.innerHTML = '';
     bodyEl.innerHTML = '<tr><td class="empty-row" colspan="4">No match data logged yet.</td></tr>';
     return;
@@ -1242,30 +1035,42 @@ function renderLeaderboard() {
   renderStandingsTable(ranked, headEl, bodyEl);
 }
 
+// Clicking a deck row opens the owning player's dashboard with that deck selected.
+function openDeckFromLeaderboard(playerName, deckLabel) {
+  selectPlayer(playerName);
+
+  const idx = playerProcessedDecks.findIndex(d =>
+    !d.isOverall && d.label.toLowerCase() === String(deckLabel).toLowerCase()
+  );
+
+  if (idx > -1) {
+    selectedDeckIndex = idx;
+    renderDashboard(playerProcessedDecks[idx]);
+  }
+}
+
 /* --- podium --- */
 
 function podiumClickAttr(entry) {
   return leaderboardEntity === 'decks'
     ? `openDeckFromLeaderboard('${toJsString(entry.player)}','${toJsString(entry.label)}')`
-    : `openPlayerFromLeaderboard('${toJsString(entry.player)}')`;
+    : `selectPlayer('${toJsString(entry.player)}')`;
 }
 
-// Headline stat follows the active sort; the second line always gives the context
-// that makes it readable (a 100% win rate off one game should look like one game).
+// The headline stat follows the active sort. The second line gives the context that makes it
+// readable, so a 100% win rate off one game looks like one game.
 function podiumStatLine(entry) {
   const def = SORT_DEFS[leaderboardSort] || SORT_DEFS.wins;
-  const primary = def.phrase(entry);
   const secondary = leaderboardSort === 'wins'
     ? `${entry.winRate} Win Rate`
     : `${entry.games} ${entry.games === 1 ? 'Game' : 'Games'}`;
-  return `${primary} | ${secondary}`;
+  return `${def.phrase(entry)} | ${secondary}`;
 }
 
 function buildPodiumTile(entry, idx) {
   const isDeck = leaderboardEntity === 'decks';
   const art = toArtCrop(entry.artUrl1) || svgPlaceholder;
   const title = isDeck ? entry.label : entry.player;
-  const subtitle = isDeck ? `Piloted by ${entry.player}` : (entry.signatureDeck || '');
 
   return `
     <div class="podium-slot podium-slot--${idx + 1}" onclick="${podiumClickAttr(entry)}">
@@ -1274,7 +1079,7 @@ function buildPodiumTile(entry, idx) {
         <div class="podium-art" style="background-image: url('${art}')">
           <div class="podium-art-info">
             <div class="podium-name">${escapeHTML(title)}</div>
-            <div class="player-mana-row">${renderManaSymbols(entry.colorIdentity)}</div>
+            <div class="playerManaRow">${renderManaSymbols(entry.colorIdentity)}</div>
           </div>
         </div>
       </div>
@@ -1296,10 +1101,9 @@ function renderPodium(ranked, container) {
 
 /* --- standings table --- */
 
-// Only three columns are ever fixed (#, name, pilot/deck-count); the fourth
-// follows whichever stat the toolbar is currently sorted by. Switching the sort
-// swaps that one column rather than revealing a wider table, which is what
-// keeps this readable on a phone.
+// Three columns are fixed (#, name, pilot or deck count). The fourth follows the active sort,
+// so changing the sort swaps one column instead of widening the table, which keeps it
+// readable on a phone.
 function renderStandingsTable(ranked, headEl, bodyEl) {
   const isDeck = leaderboardEntity === 'decks';
   const def = SORT_DEFS[leaderboardSort] || SORT_DEFS.wins;
@@ -1313,9 +1117,6 @@ function renderStandingsTable(ranked, headEl, bodyEl) {
     <th>${isDeck ? 'Pilot' : 'Decks'}</th>
     <th class="is-sorted">${escapeHTML(def.column)}</th>
   `;
-
-  const hint = document.getElementById('standingsHint');
-  if (hint) hint.innerText = podiumCount > 0 ? `Ranks 1-${podiumCount} are on the podium above` : '';
 
   if (rows.length === 0) {
     bodyEl.innerHTML = `<tr><td class="empty-row" colspan="4">${podiumCount > 0 ? 'Everyone ranked is on the podium.' : 'Nothing to rank yet.'}</td></tr>`;

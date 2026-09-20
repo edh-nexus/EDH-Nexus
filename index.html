@@ -1,104 +1,112 @@
 <!DOCTYPE html>
-<html>
- 
+<html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EDH Nexus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
   <link href="style.css" rel="stylesheet">
   <script src="code.js"></script>
 </head>
- 
+
 <body>
   <header>
-    <h1>EDH Nexus</h1>
     <div class="topBtn">
-      <button id="backToPlayersBtn" class="btn" onclick="showPlayerSelection()"> &larr; Back to
-        Players </button> <button id="selectDeckBtn" class="btn btn-primary" onclick="openDeckModal()"> Select Deck </button>
+      <button id="backToPlayersBtn" class="btn" onclick="showPlayerSelection()">&larr; Back to Players</button>
+      <button id="selectDeckBtn" class="btn btn-primary" onclick="openDeckModal()">Select Deck</button>
     </div>
   </header>
+
   <!-- MAIN TABS -->
-  <nav class="tab-nav">
-    <button id="tabBtnPlayers" class="tab-btn active" onclick="switchTab('players')">Players</button>
-    <button id="tabBtnLeaderboard" class="tab-btn" onclick="switchTab('leaderboard')">Leaderboard</button>
+  <nav class="tabNav">
+    <button id="tabBtnPlayers" class="tabBtn active" onclick="switchTab('players')">Players</button>
+    <button id="tabBtnLeaderboard" class="tabBtn" onclick="switchTab('leaderboard')">Leaderboard</button>
   </nav>
+
   <div id="loading">Loading EDH Nexus database...</div>
+
   <!-- PLAYER SELECTION VIEW -->
   <div id="playerSelectionView" style="display: none;">
     <div id="playerGrid" class="player-grid"></div>
   </div>
-  <!-- DASHBOARD DISPLAY -->
+
+  <!-- PLAYER DASHBOARD -->
   <div id="dashboard" class="dashboard-grid" style="display: none;">
     <div class="card">
-      <h4 id="commanderCardHeader"
-        style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">Active Commander</h4>
-      <div id="artContainer" class="art-container" onclick="togglePartnerStack()"><img id="commanderArt1"
-          class="single-art" alt="Commander Art 1" onerror="this.onerror=null; this.src=svgPlaceholder;"> <img
-          id="commanderArt2" class="stacked-card partner-c2" alt="Commander Art 2" style="display: none;"
-          onerror="this.onerror=null; this.src=svgPlaceholder;"></div>
-      <div style="display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 15px;">
+      <h4 id="commanderCardHeader" class="card-heading">Active Commander</h4>
+      <div id="artContainer" class="art-container" onclick="togglePartnerStack()">
+        <img id="commanderArt1" class="single-art" alt="Commander Art 1"
+          onerror="this.onerror=null; this.src=svgPlaceholder;">
+        <img id="commanderArt2" class="stacked-card partner-c2" alt="Commander Art 2" style="display: none;"
+          onerror="this.onerror=null; this.src=svgPlaceholder;">
+      </div>
+      <div class="identity-row">
         <div id="colorIdentityDisplay"></div>
       </div>
     </div>
+
     <div class="card">
-      <h4 style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">
-        Statistics</h4>
+      <h4 class="card-heading">Statistics</h4>
       <div class="stats-grid">
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Total Games</div>
+          <div class="stat-caption">Total Games</div>
           <div id="totalGames" class="stat-val">0</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Record (W / L)</div>
+          <div class="stat-caption">Record (W / L)</div>
           <div id="winsLosses" class="stat-val">0 / 0</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Win Rate</div>
-          <div id="winRate" class="stat-val" style="color: var(--win-color);">0%</div>
+          <div class="stat-caption">Win Rate</div>
+          <div id="winRate" class="stat-val stat-val--win">0%</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">AVG Position</div>
+          <div class="stat-caption">AVG Position</div>
           <div id="avgPos" class="stat-val">N/A</div>
         </div>
         <div class="stat-box">
-          <div style="color: var(--text-muted); font-size: 0.85rem;">Kills</div>
+          <div class="stat-caption">Kills</div>
           <div id="totalKills" class="stat-val">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-caption">First Blood</div>
+          <div id="totalFirstBloods" class="stat-val stat-val--gold">0</div>
         </div>
       </div>
     </div>
   </div>
-  <div id="historyCard" class="card" style="margin-top: 20px; display: none;">
-    <h4 style="color: var(--text-muted); margin-bottom: 12px; font-size: 0.85rem;">Match History</h4>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+
+  <div id="historyCard" class="card history-card" style="display: none;">
+    <h4 class="card-heading">Match History</h4>
+    <table class="history-table">
       <thead>
-        <tr
-          style="text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
-          <th style="padding: 8px;">Date</th>
-          <th style="padding: 8px;">Commander</th>
-          <th style="padding: 8px;">Finish</th>
-          <th style="padding: 8px;">Kills</th>
-          <th style="padding: 8px;">Opponents &amp; Decks</th>
+        <tr>
+          <th>Date</th>
+          <th>Commander</th>
+          <th>Finish</th>
+          <th>Kills</th>
+          <th>Opponents &amp; Decks</th>
         </tr>
       </thead>
       <tbody id="matchHistoryRows"></tbody>
     </table>
   </div>
+
   <!-- LEADERBOARD VIEW -->
   <div id="leaderboardView" style="display: none;">
 
-    <!-- Toolbar -->
     <div class="card leaderboard-toolbar">
       <div class="toolbar-group">
         <span class="toolbar-label">Ranking</span>
-        
         <div id="entityControls" class="segmented">
-          <button class="seg-btn btn active" id="playerBtn" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
-          <button class="seg-btn btn" id="decksBtn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
+          <button class="seg-btn btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
+          <button class="seg-btn btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
         </div>
       </div>
+
       <div class="toolbar-group toolbar-group--grow">
         <span class="toolbar-label">Sort by</span>
         <div id="leaderboardSortControls" class="sort-controls">
@@ -107,14 +115,13 @@
           <button class="sort-btn btn" data-sort="avgPos" onclick="setLeaderboardSort('avgPos')">Avg Position</button>
           <button class="sort-btn btn" data-sort="games" onclick="setLeaderboardSort('games')">Games Played</button>
           <button class="sort-btn btn" data-sort="kills" onclick="setLeaderboardSort('kills')">Kill Count</button>
+          <button class="sort-btn btn" data-sort="firstBlood" onclick="setLeaderboardSort('firstBlood')">First Blood</button>
         </div>
       </div>
     </div>
 
     <!-- Top three, rendered as podium tiles -->
     <div id="leaderboardPodium" class="card podium-card"></div>
-
-    <div id="leaderboardRecords" class="record-strip"></div>
 
     <div class="card">
       <div class="table-scroll">
@@ -127,19 +134,20 @@
       </div>
     </div>
   </div>
-  <!-- DECK SELECTOR MODAL -->
+
+  <!-- DECK PICKER MODAL -->
   <div id="deckModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalTitle">Select Deck</h3>
         <button class="close-btn" onclick="closeDeckModal()">&times;</button>
       </div>
-      <div class="modal-body"><input type="text" id="deckSearchInput" class="search-bar" placeholder="Search Decks"
-          oninput="filterDeckGrid()">
+      <div class="modal-body">
+        <input type="text" id="deckSearchInput" class="search-bar" placeholder="Search Decks" oninput="filterDeckGrid()">
         <div id="deckGrid" class="deck-grid"></div>
       </div>
     </div>
   </div>
 </body>
- 
+
 </html>
