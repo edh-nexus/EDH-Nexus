@@ -33,9 +33,9 @@ const CACHE_KEY_FINGERPRINT = 'edh_data_fingerprint';
 // Fallback artwork for commanders with no stored Scryfall image.
 const svgPlaceholder = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 880">' +
-  '<rect width="630" height="880" fill="#171a21"/>' +
-  '<rect x="24" y="24" width="582" height="832" rx="28" fill="none" stroke="#282d3b" stroke-width="4"/>' +
-  '<text x="315" y="455" font-family="sans-serif" font-size="40" fill="#94a3b8" text-anchor="middle">EDH Nexus</text>' +
+  '<rect width="630" height="880" fill="#ECE3D2"/>' +
+  '<rect x="24" y="24" width="582" height="832" rx="28" fill="none" stroke="#C8BBA5" stroke-width="4"/>' +
+  '<text x="315" y="455" font-family="sans-serif" font-size="40" fill="#726150" text-anchor="middle">EDH Nexus</text>' +
   '</svg>'
 );
 
@@ -59,7 +59,7 @@ function renderManaSymbols(colorIdentityStr) {
   if (colors.length === 0) colors.push('C');
 
   const icons = colors.map(c => MANA_SVGS[c] || MANA_SVGS.C).join('');
-  return `<div class="mana-container">${icons}</div>`;
+  return `<div class="manaSymbolContainer">${icons}</div>`;
 }
 
 // Older data used other key names for the artwork. The first one holding a URL wins.
@@ -387,22 +387,22 @@ function showPlayerSelection() {
     card.onclick = () => selectPlayer(player);
 
     card.innerHTML = `
-      <div class="card-left-column" style="background-image: url('${artCropUrl}')">
-        <div class="card-left-info">
-            <div class="player-name-title">${player}</div>
+      <div class="cardLeftColumn" style="background-image: url('${artCropUrl}')">
+        <div class="cardLeftInfo">
+            <div class="playerNameTitle">${player}</div>
             <div class="playerManaRow">${renderManaSymbols(profile.colorIdentity)}</div>
         </div>
       </div>
 
-      <div class="card-right-column">
-        <div class="card-right-stats">
-            <div class="stat-box">
-              <span class="stat-value">${profile.totalGames}</span>
+      <div class="cardRightColumn">
+        <div class="cardRightStats">
+            <div class="statBox">
+              <span class="statsValue">${profile.totalGames}</span>
               <span class="stat-label">GAMES</span>
             </div>
             <div class="stat-divider"></div>
-            <div class="stat-box">
-              <span class="stat-value win-color">${profile.winRate}</span>
+            <div class="statBox">
+              <span class="statsValue win-color">${profile.winRate}</span>
               <span class="stat-label">WIN RATE</span>
             </div>
         </div>
@@ -436,7 +436,7 @@ function selectPlayer(playerName) {
 
 function togglePartnerStack() {
   const container = document.getElementById('artContainer');
-  if (container.classList.contains('has-partner')) {
+  if (container.classList.contains('hasPartner')) {
     container.classList.toggle('swapped');
   }
 }
@@ -468,14 +468,14 @@ function renderDeckGrid(decks) {
   grid.innerHTML = '';
 
   if (decks.length === 0) {
-    grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 20px;">No matching decks found.</div>';
+    grid.innerHTML = '<div style="color: var(--secondaryText); grid-column: 1/-1; text-align: center; padding: 20px;">No matching decks found.</div>';
     return;
   }
 
   decks.forEach(deck => {
     const realIndex = playerProcessedDecks.indexOf(deck);
     const tile = document.createElement('div');
-    tile.className = `deck-tile ${realIndex === selectedDeckIndex ? 'active' : ''}`;
+    tile.className = `deckTile ${realIndex === selectedDeckIndex ? 'active' : ''}`;
     tile.onclick = () => selectDeckFromModal(realIndex);
 
     const hasPartner = Boolean(deck.commander2 && deck.commander2 !== 'None' && deck.artUrl2);
@@ -483,22 +483,22 @@ function renderDeckGrid(decks) {
 
     const artHTML = hasPartner
       ? `
-        <div class="tile-art-wrapper is-partner">
-          <img src="${deck.artUrl1}" class="partner-tile-art art-c1" alt="${deck.commander1}" ${fallback}/>
-          <img src="${deck.artUrl2}" class="partner-tile-art art-c2" alt="${deck.commander2}" ${fallback}/>
+        <div class="tileArtWrapper isPartner">
+          <img src="${deck.artUrl1}" class="partnerTileArt artC1" alt="${deck.commander1}" ${fallback}/>
+          <img src="${deck.artUrl2}" class="partnerTileArt artC2" alt="${deck.commander2}" ${fallback}/>
         </div>`
       : `
-        <div class="tile-art-wrapper">
-          <img src="${deck.artUrl1}" class="tile-art" alt="${deck.label}" ${fallback}/>
+        <div class="tileArtWrapper">
+          <img src="${deck.artUrl1}" class="tileArt" alt="${deck.label}" ${fallback}/>
         </div>`;
 
     tile.innerHTML = `
       ${artHTML}
-      <div class="tile-body">
-        <div class="deck-tile-title">${deck.label}</div>
-        <div class="deck-tile-footer">
+      <div class="tileBody">
+        <div class="deckTileTitle">${deck.label}</div>
+        <div class="deckTileFooter">
           ${renderManaSymbols(deck.colorIdentity)}
-          <span style="font-weight: 500;">${deck.totalGames} Games <span style="color: var(--win-color); font-weight: bold; margin-left: 2px;">(${deck.winRate})</span></span>
+          <span style="font-weight: 500;">${deck.totalGames} Games <span style="color: var(--secondaryAccent); font-weight: bold; margin-left: 2px;">(${deck.winRate})</span></span>
         </div>
       </div>
     `;
@@ -649,12 +649,12 @@ function renderDashboard(data) {
   if (data.commander2 && data.artUrl2) {
     art2.src = data.artUrl2;
     art2.style.display = 'block';
-    artContainer.classList.add('has-partner');
-    art1.className = 'stacked-card partner-c1';
+    artContainer.classList.add('hasPartner');
+    art1.className = 'stackedCard partnerC1';
   } else {
     art2.style.display = 'none';
-    artContainer.classList.remove('has-partner');
-    art1.className = 'single-art';
+    artContainer.classList.remove('hasPartner');
+    art1.className = 'singleArt';
   }
 
   document.getElementById('colorIdentityDisplay').innerHTML = renderManaSymbols(data.colorIdentity);
@@ -670,7 +670,7 @@ function renderDashboard(data) {
   if (data.selfKills > 0) killNotes.push(`${data.selfKills} self`);
 
   document.getElementById('totalKills').innerHTML = killNotes.length
-    ? `${kills}<span class="stat-sub">${killNotes.join(' - ')}</span>`
+    ? `${kills} (${killNotes.join(' - ')})`
     : String(kills);
 
   renderMatchHistory(data.recentMatches);
@@ -685,12 +685,12 @@ function renderMatchHistory(matches) {
   tbody.innerHTML = '';
 
   if (!matches || matches.length === 0) {
-    tbody.innerHTML = '<tr class="history-empty"><td colspan="5">No matches recorded yet.</td></tr>';
+    tbody.innerHTML = '<tr class="historyEmpty"><td colspan="5">No matches recorded yet.</td></tr>';
     return;
   }
 
   const targetPlayer = activePlayerName.toLowerCase();
-  const firstBloodTag = ' <span style="color: #e8c547; font-weight: 700;" title="First Blood">FB</span>';
+  const firstBloodTag = ' <span style="background: var(--primaryAccent); color: var(--primaryText); font-weight: 700; font-size: 0.7rem; padding: 1px 5px; border-radius: 4px;" title="First Blood">FB</span>';
 
   matches.forEach(m => {
     const posClass = Number(m.position) === 1 ? 'badge-win' : 'badge-loss';
@@ -701,29 +701,29 @@ function renderMatchHistory(matches) {
         const seat = m.pod.indexOf(p);
         const podKills = m.podKills ? (m.podKills[seat] || 0) : 0;
         const killTag = podKills > 0
-          ? ` <span style="color: var(--accent-hover); font-weight: 700;">${podKills}K</span>`
+          ? ` <span style="color: var(--secondaryAccent); font-weight: 700;">${podKills}K</span>`
           : '';
         const selfTag = m.podSelfKills && m.podSelfKills[seat]
-          ? ' <span style="color: var(--loss-color); font-weight: 700;" title="Took themselves out">self</span>'
+          ? ' <span style="color: var(--secondaryText); font-weight: 700;" title="Took themselves out">self</span>'
           : '';
         const fbTag = isFirstBloodFor(m.firstBlood, p.player, p.commander) ? firstBloodTag : '';
 
-        return `<span class="hist-opp"><strong>${ordinal(p.position)}:</strong> ${escapeHTML(p.player)} (<em>${escapeHTML(p.commander)}</em>)${killTag}${selfTag}${fbTag}</span>`;
+        return `<span class="historyOpponent"><strong>${ordinal(p.position)}:</strong> ${escapeHTML(p.player)} (<em>${escapeHTML(p.commander)}</em>)${killTag}${selfTag}${fbTag}</span>`;
       })
       .join(' ');
 
     const outNote = m.selfKill ? 'self-KO' : (m.killedBy ? `out to ${m.killedBy}` : '');
-    const knockedOut = outNote ? `<div class="hist-note">${escapeHTML(outNote)}</div>` : '';
+    const knockedOut = outNote ? `<div class="historyOutTo">${escapeHTML(outNote)}</div>` : '';
 
     // The data-label attributes are the field names shown when the table turns into cards on phones.
     const row = document.createElement('tr');
-    row.className = 'history-row';
+    row.className = 'historyRow';
     row.innerHTML = `
-      <td class="hist-date" data-label="Date">${m.date || 'N/A'}</td>
-      <td class="hist-commander" data-label="Commander">${escapeHTML(m.commander)}${m.gotFirstBlood ? firstBloodTag : ''}</td>
-      <td class="hist-finish" data-label="Finish"><span class="${posClass}">${ordinal(m.position)}</span>${knockedOut}</td>
-      <td class="hist-kills" data-label="Kills">${Number(m.kills || 0)}</td>
-      <td class="hist-opponents" data-label="Opponents &amp; Decks">${opponentsHTML}</td>
+      <td class="historyDate" data-label="Date">${m.date || 'N/A'}</td>
+      <td class="historyCommander" data-label="Commander">${escapeHTML(m.commander)}${m.gotFirstBlood ? firstBloodTag : ''}</td>
+      <td class="historyPlacement" data-label="Finish"><span class="${posClass}">${ordinal(m.position)}</span>${knockedOut}</td>
+      <td class="historyKills" data-label="Kills">${Number(m.kills || 0)}</td>
+      <td class="historyOpponents" data-label="Opponents &amp; Decks">${opponentsHTML}</td>
     `;
     tbody.appendChild(row);
   });
@@ -1000,7 +1000,7 @@ function setLeaderboardSort(sortKey) {
 function updateLeaderboardControls() {
   const entityBox = document.getElementById('entityControls');
   if (entityBox) {
-    entityBox.querySelectorAll('.seg-btn').forEach(btn => {
+    entityBox.querySelectorAll('.segBtn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.entity === leaderboardEntity);
     });
   }
@@ -1022,7 +1022,7 @@ function renderLeaderboard() {
   updateLeaderboardControls();
 
   if (rawDecks.length === 0 && rawMatches.length === 0) {
-    podiumEl.innerHTML = '<div class="podium-empty">No match data logged yet.</div>';
+    podiumEl.innerHTML = '<div class="podiumEmpty">No match data logged yet.</div>';
     headEl.innerHTML = '';
     bodyEl.innerHTML = '<tr><td class="empty-row" colspan="4">No match data logged yet.</td></tr>';
     return;
@@ -1073,17 +1073,17 @@ function buildPodiumTile(entry, idx) {
   const title = isDeck ? entry.label : entry.player;
 
   return `
-    <div class="podium-slot podium-slot--${idx + 1}" onclick="${podiumClickAttr(entry)}">
-      <div class="podium-overall">
+    <div class="podiumSlot podiumSlot${idx + 1}" onclick="${podiumClickAttr(entry)}">
+      <div class="podiumOverall">
         <div class="podium-badge">${PODIUM_RANKS[idx]}</div>
-        <div class="podium-art" style="background-image: url('${art}')">
-          <div class="podium-art-info">
-            <div class="podium-name">${escapeHTML(title)}</div>
+        <div class="podiumArt" style="background-image: url('${art}')">
+          <div class="podiumArtInfo">
+            <div class="podiumName">${escapeHTML(title)}</div>
             <div class="playerManaRow">${renderManaSymbols(entry.colorIdentity)}</div>
           </div>
         </div>
       </div>
-      <div class="podium-plinth">${escapeHTML(podiumStatLine(entry))}</div>
+      <div class="podiumPlinth">${escapeHTML(podiumStatLine(entry))}</div>
     </div>
   `;
 }
@@ -1092,11 +1092,11 @@ function renderPodium(ranked, container) {
   const top = ranked.filter(entry => entry.games > 0).slice(0, 3);
 
   if (top.length === 0) {
-    container.innerHTML = '<div class="podium-empty">Log a match to fill the podium.</div>';
+    container.innerHTML = '<div class="podiumEmpty">Log a match to fill the podium.</div>';
     return;
   }
 
-  container.innerHTML = `<div class="podium-row">${top.map(buildPodiumTile).join('')}</div>`;
+  container.innerHTML = `<div class="podiumRow">${top.map(buildPodiumTile).join('')}</div>`;
 }
 
 /* --- standings table --- */
@@ -1109,13 +1109,13 @@ function renderStandingsTable(ranked, headEl, bodyEl) {
   const def = SORT_DEFS[leaderboardSort] || SORT_DEFS.wins;
   const podiumCount = PODIUM_IN_TABLE ? 0 : Math.min(3, ranked.filter(entry => entry.games > 0).length);
   const rows = ranked.slice(podiumCount);
-  const statCellCls = 'is-sorted' + (leaderboardSort === 'winRate' ? ' win-cell' : '');
+  const statCellCls = 'isSorted' + (leaderboardSort === 'winRate' ? ' win-cell' : '');
 
   headEl.innerHTML = `
     <th>#</th>
     <th>${isDeck ? 'Deck' : 'Player'}</th>
     <th>${isDeck ? 'Pilot' : 'Decks'}</th>
-    <th class="is-sorted">${escapeHTML(def.column)}</th>
+    <th class="isSorted">${escapeHTML(def.column)}</th>
   `;
 
   if (rows.length === 0) {
@@ -1132,7 +1132,7 @@ function renderStandingsTable(ranked, headEl, bodyEl) {
 
     return `
       <tr onclick="${podiumClickAttr(entry)}">
-        <td class="rank-cell rank-${rank}">${rank}</td>
+        <td class="rankCell rank${rank}">${rank}</td>
         <td><span class="player-cell">${escapeHTML(name)}</span></td>
         ${secondCell}
         <td class="${statCellCls}">${escapeHTML(def.format(entry))}</td>

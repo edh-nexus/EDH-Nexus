@@ -7,7 +7,7 @@
   <title>EDH Nexus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap" rel="stylesheet">
+     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
   <link href="style.css" rel="stylesheet">
   <script src="code.js"></script>
 </head>
@@ -16,7 +16,7 @@
   <header>
     <div class="topBtn">
       <button id="backToPlayersBtn" class="btn" onclick="showPlayerSelection()">&larr; Back to Players</button>
-      <button id="selectDeckBtn" class="btn btn-primary" onclick="openDeckModal()">Select Deck</button>
+      <button id="selectDeckBtn" class="btn btnPrimary" onclick="openDeckModal()">Select Deck</button>
     </div>
   </header>
 
@@ -30,58 +30,58 @@
 
   <!-- PLAYER SELECTION VIEW -->
   <div id="playerSelectionView" style="display: none;">
-    <div id="playerGrid" class="player-grid"></div>
+    <div id="playerGrid" class="playerGrid"></div>
   </div>
 
   <!-- PLAYER DASHBOARD -->
-  <div id="dashboard" class="dashboard-grid" style="display: none;">
+  <div id="dashboard" class="dashboardGrid" style="display: none;">
     <div class="card">
-      <h4 id="commanderCardHeader" class="card-heading">Active Commander</h4>
-      <div id="artContainer" class="art-container" onclick="togglePartnerStack()">
-        <img id="commanderArt1" class="single-art" alt="Commander Art 1"
+      <h4 id="commanderCardHeader" class="cardHeading">Active Commander</h4>
+      <div id="artContainer" class="artContainer" onclick="togglePartnerStack()">
+        <img id="commanderArt1" class="singleArt" alt="Commander Art 1"
           onerror="this.onerror=null; this.src=svgPlaceholder;">
-        <img id="commanderArt2" class="stacked-card partner-c2" alt="Commander Art 2" style="display: none;"
+        <img id="commanderArt2" class="stackedCard partnerC2" alt="Commander Art 2" style="display: none;"
           onerror="this.onerror=null; this.src=svgPlaceholder;">
       </div>
-      <div class="identity-row">
+      <div class="identityRow">
         <div id="colorIdentityDisplay"></div>
       </div>
     </div>
 
     <div class="card">
-      <h4 class="card-heading">Statistics</h4>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-caption">Total Games</div>
-          <div id="totalGames" class="stat-val">0</div>
+      <h4 class="cardHeading">Statistics</h4>
+      <div class="statsGrid">
+        <div class="statBox">
+          <div class="statCaption">Total Games</div>
+          <div id="totalGames" class="statValue">0</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-caption">Record (W / L)</div>
-          <div id="winsLosses" class="stat-val">0 / 0</div>
+        <div class="statBox">
+          <div class="statCaption">Record (W / L)</div>
+          <div id="winsLosses" class="statValue">0 / 0</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-caption">Win Rate</div>
-          <div id="winRate" class="stat-val stat-val--win">0%</div>
+        <div class="statBox">
+          <div class="statCaption">Win Rate</div>
+          <div id="winRate" class="statValue statValue--win">0%</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-caption">AVG Position</div>
-          <div id="avgPos" class="stat-val">N/A</div>
+        <div class="statBox">
+          <div class="statCaption">AVG Position</div>
+          <div id="avgPos" class="statValue">N/A</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-caption">Kills</div>
-          <div id="totalKills" class="stat-val">0</div>
+        <div class="statBox">
+          <div class="statCaption">Kills</div>
+          <div id="totalKills" class="statValue">0</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-caption">First Blood</div>
-          <div id="totalFirstBloods" class="stat-val stat-val--gold">0</div>
+        <div class="statBox">
+          <div class="statCaption">First Blood</div>
+          <div id="totalFirstBloods" class="statValue statValue--gold">0</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="historyCard" class="card history-card" style="display: none;">
-    <h4 class="card-heading">Match History</h4>
-    <table class="history-table">
+  <div id="historyCard" class="card historyCard" style="display: none;">
+    <h4 class="cardHeading">Match History</h4>
+    <table class="historyTable">
       <thead>
         <tr>
           <th>Date</th>
@@ -100,15 +100,15 @@
 
     <div class="card leaderboard-toolbar">
       <div class="toolbar-group">
-        <span class="toolbar-label">Ranking</span>
+        <span class="toolbarLabel">Ranking</span>
         <div id="entityControls" class="segmented">
-          <button class="seg-btn btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
-          <button class="seg-btn btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
+          <button class="segBtn btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
+          <button class="segBtn btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
         </div>
       </div>
 
       <div class="toolbar-group toolbar-group--grow">
-        <span class="toolbar-label">Sort by</span>
+        <span class="toolbarLabel">Sort by</span>
         <div id="leaderboardSortControls" class="sort-controls">
           <button class="sort-btn btn active" data-sort="wins" onclick="setLeaderboardSort('wins')">Wins</button>
           <button class="sort-btn btn" data-sort="winRate" onclick="setLeaderboardSort('winRate')">Win Rate</button>
@@ -121,11 +121,11 @@
     </div>
 
     <!-- Top three, rendered as podium tiles -->
-    <div id="leaderboardPodium" class="card podium-card"></div>
+    <div id="leaderboardPodium" class="card podiumCard"></div>
 
     <div class="card">
       <div class="table-scroll">
-        <table class="leaderboard-table">
+        <table class="leaderboardTable">
           <thead>
             <tr id="leaderboardHead"></tr>
           </thead>
@@ -136,15 +136,15 @@
   </div>
 
   <!-- DECK PICKER MODAL -->
-  <div id="deckModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div id="deckModal" class="modalOverlay" style="display: none;">
+    <div class="modalContent">
+      <div class="modalHeader">
         <h3 id="modalTitle">Select Deck</h3>
-        <button class="close-btn" onclick="closeDeckModal()">&times;</button>
+        <button class="closeBtn" onclick="closeDeckModal()">&times;</button>
       </div>
-      <div class="modal-body">
-        <input type="text" id="deckSearchInput" class="search-bar" placeholder="Search Decks" oninput="filterDeckGrid()">
-        <div id="deckGrid" class="deck-grid"></div>
+      <div class="modalBody">
+        <input type="text" id="deckSearchInput" class="searchBar" placeholder="Search Decks" oninput="filterDeckGrid()">
+        <div id="deckGrid" class="deckGrid"></div>
       </div>
     </div>
   </div>
