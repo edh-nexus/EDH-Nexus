@@ -7,7 +7,9 @@
   <title>EDH Nexus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+    rel="stylesheet">
   <link href="style.css" rel="stylesheet">
   <script src="code.js"></script>
 </head>
@@ -35,46 +37,47 @@
 
   <!-- PLAYER DASHBOARD -->
   <div id="dashboard" class="dashboardGrid" style="display: none;">
-    <div class="card">
-      <h4 id="commanderCardHeader" class="cardHeading">Active Commander</h4>
-      <div id="artContainer" class="artContainer" onclick="togglePartnerStack()">
-        <img id="commanderArt1" class="singleArt" alt="Commander Art 1"
-          onerror="this.onerror=null; this.src=svgPlaceholder;">
-        <img id="commanderArt2" class="stackedCard partnerC2" alt="Commander Art 2" style="display: none;"
-          onerror="this.onerror=null; this.src=svgPlaceholder;">
+    <div class="profileCard card">
+      <div class="cardHeader">
+        <h4 id="commanderCardHeader" class="cardHeading">Active Commander</h4>
       </div>
-      <div class="identityRow">
-        <div id="colorIdentityDisplay"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h4 class="cardHeading">Statistics</h4>
-      <div class="statsGrid">
-        <div class="statBox">
-          <div class="statCaption">Total Games</div>
-          <div id="totalGames" class="statValue">0</div>
+      <div class="cardStatBlock">
+        <div id="artContainer" class="artContainer" onclick="togglePartnerStack()">
+          <img id="commanderArt1" class="singleArt" alt="Commander Art 1"
+            onerror="this.onerror=null; this.src=svgPlaceholder;">
+          <img id="commanderArt2" class="stackedCard partnerC2" alt="Commander Art 2" style="display: none;"
+            onerror="this.onerror=null; this.src=svgPlaceholder;">
         </div>
-        <div class="statBox">
-          <div class="statCaption">Record (W / L)</div>
-          <div id="winsLosses" class="statValue">0 / 0</div>
+        <div class="statsGrid">
+          <div class="statBox">
+            <div class="statCaption">Total Games</div>
+            <div id="totalGames" class="statValue">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statCaption">Record (W / L)</div>
+            <div id="winsLosses" class="statValue">0 / 0</div>
+          </div>
+          <div class="statBox">
+            <div class="statCaption">Win Rate</div>
+            <div id="winRate" class="statValue statValue--win">0%</div>
+          </div>
+          <div class="statBox">
+            <div class="statCaption">AVG Position</div>
+            <div id="avgPos" class="statValue">N/A</div>
+          </div>
+          <div class="statBox">
+            <div class="statCaption">Kills</div>
+            <div id="totalKills" class="statValue">0</div>
+          </div>
+          <div class="statBox">
+            <div class="statCaption">First Blood</div>
+            <div id="totalFirstBloods" class="statValue statValue--gold">0</div>
+          </div>
         </div>
-        <div class="statBox">
-          <div class="statCaption">Win Rate</div>
-          <div id="winRate" class="statValue statValue--win">0%</div>
+        <div class="identityRow">
+          <div id="colorIdentityDisplay"></div>
         </div>
-        <div class="statBox">
-          <div class="statCaption">AVG Position</div>
-          <div id="avgPos" class="statValue">N/A</div>
-        </div>
-        <div class="statBox">
-          <div class="statCaption">Kills</div>
-          <div id="totalKills" class="statValue">0</div>
-        </div>
-        <div class="statBox">
-          <div class="statCaption">First Blood</div>
-          <div id="totalFirstBloods" class="statValue statValue--gold">0</div>
-        </div>
+        <div id="decklistLinkWrap" class="decklistLinkWrap" style="display: none;"></div>
       </div>
     </div>
   </div>
@@ -95,35 +98,58 @@
     </table>
   </div>
 
+  <!-- HEAD-TO-HEAD (rivalry record vs. every opponent this player has shared a pod with) -->
+  <div id="headToHeadCard" class="card historyCard" style="display: none;">
+    <h4 class="cardHeading">Head-to-Head</h4>
+    <div id="headToHeadList" class="rivalryList"></div>
+  </div>
+
   <!-- LEADERBOARD VIEW -->
   <div id="leaderboardView" style="display: none;">
 
     <div class="card leaderboard-toolbar">
       <div class="toolbar-group">
-        <span class="toolbarLabel">Ranking</span>
-        <div id="entityControls" class="segmented">
-          <button class="segBtn btn active" data-entity="players" onclick="setLeaderboardEntity('players')">Players</button>
-          <button class="segBtn btn" data-entity="decks" onclick="setLeaderboardEntity('decks')">Decks</button>
-        </div>
+        <label class="toolbarLabel" for="entitySelect">Ranking</label>
+        <select id="entitySelect" class="toolbarSelect" onchange="setLeaderboardEntity(this.value)">
+          <option value="players">Players</option>
+          <option value="decks">Decks</option>
+        </select>
       </div>
 
-      <div class="toolbar-group toolbar-group--grow">
-        <span class="toolbarLabel">Sort by</span>
-        <div id="leaderboardSortControls" class="sort-controls">
-          <button class="sort-btn btn active" data-sort="wins" onclick="setLeaderboardSort('wins')">Wins</button>
-          <button class="sort-btn btn" data-sort="winRate" onclick="setLeaderboardSort('winRate')">Win Rate</button>
-          <button class="sort-btn btn" data-sort="avgPos" onclick="setLeaderboardSort('avgPos')">Avg Position</button>
-          <button class="sort-btn btn" data-sort="games" onclick="setLeaderboardSort('games')">Games Played</button>
-          <button class="sort-btn btn" data-sort="kills" onclick="setLeaderboardSort('kills')">Kill Count</button>
-          <button class="sort-btn btn" data-sort="firstBlood" onclick="setLeaderboardSort('firstBlood')">First Blood</button>
-        </div>
+      <div id="sortGroup" class="toolbar-group">
+        <label class="toolbarLabel" for="sortSelect">Sort by</label>
+        <select id="sortSelect" class="toolbarSelect" onchange="setLeaderboardSort(this.value)">
+          <option value="wins">Wins</option>
+          <option value="avgPos">Avg Position</option>
+          <option value="games">Games Played</option>
+          <option value="kills">Kill Count</option>
+          <option value="firstBlood">First Blood</option>
+        </select>
       </div>
+
+      <div class="toolbar-group">
+        <label class="toolbarLabel" for="periodSelect">Period</label>
+        <select id="periodSelect" class="toolbarSelect" onchange="setLeaderboardFilter('period', this.value)"></select>
+      </div>
+
+      <div class="toolbar-group">
+        <label class="toolbarLabel" for="podSizeSelect">Pod size</label>
+        <select id="podSizeSelect" class="toolbarSelect" onchange="setLeaderboardFilter('podSize', this.value)">
+          <option value="any">Any</option>
+          <option value="small">2-3 players</option>
+          <option value="4">4 players</option>
+          <option value="large">5+ players</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn" onclick="resetLeaderboardFilters()">Reset</button>
+      <div id="filterSummary" class="filterSummary"></div>
     </div>
 
     <!-- Top three, rendered as podium tiles -->
     <div id="leaderboardPodium" class="card podiumCard"></div>
 
-    <div class="card">
+    <div id="standingsCard" class="card">
       <div class="table-scroll">
         <table class="leaderboardTable">
           <thead>
