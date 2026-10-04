@@ -166,5 +166,37 @@
       "player": "Kyle",
       "commander": "Aragorn, the Uniter"
     }
+  },
+  {
+    "gameId": "GAME_1791084766733",
+    "date": "2026-10-04",
+    "players": [
+      {
+        "player": "Kyle",
+        "commander": "Anim Pakal, Thousandth Moon",
+        "position": 1,
+        "kills": 2
+      },
+      {
+        "player": "Chris",
+        "commander": "Xyris, the Writhing Storm",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Anim Pakal, Thousandth Moon"
+      },
+      {
+        "player": "Zack",
+        "commander": "Esix, Fractal Bloom",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Anim Pakal, Thousandth Moon"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Anim Pakal, Thousandth Moon"
+    }
   }
 ]
