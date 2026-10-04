@@ -134,5 +134,37 @@
       "player": "Kyle",
       "commander": "Thranduil, the Elvenking"
     }
+  },
+  {
+    "gameId": "GAME_1791082390777",
+    "date": "2026-10-04",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Kenrith, the Returned King",
+        "position": 1,
+        "kills": 1
+      },
+      {
+        "player": "Kyle",
+        "commander": "Aragorn, the Uniter",
+        "position": 2,
+        "kills": 1,
+        "killedBy": "Chris",
+        "killedByCommander": "Kenrith, the Returned King"
+      },
+      {
+        "player": "Zack",
+        "commander": "Molecule Man",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Aragorn, the Uniter"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Aragorn, the Uniter"
+    }
   }
 ]
