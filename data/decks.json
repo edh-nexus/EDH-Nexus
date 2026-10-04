@@ -133,6 +133,15 @@
   },
   {
     "player": "Kyle",
+    "commander1": "Thranduil, the Elvenking",
+    "commander2": "None",
+    "colorIdentity": "UBG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/f/e/fe2fe8fa-3b99-44c1-bab9-922e5c864952.webp?1784377043",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Kyle",
     "commander1": "Wolverine, Best There Is",
     "commander2": "None",
     "colorIdentity": "RG",
