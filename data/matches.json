@@ -70,5 +70,37 @@
       "player": "Lacey",
       "commander": "Edgar Markov"
     }
+  },
+  {
+    "gameId": "GAME_1791074260375",
+    "date": "2026-10-04",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Araumi of the Dead Tide",
+        "position": 1,
+        "kills": 1
+      },
+      {
+        "player": "Zack",
+        "commander": "Captain America, Team Leader",
+        "position": 2,
+        "kills": 1,
+        "killedBy": "Chris",
+        "killedByCommander": "Araumi of the Dead Tide"
+      },
+      {
+        "player": "Kyle",
+        "commander": "Wolverine, Best There Is",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Zack",
+        "killedByCommander": "Captain America, Team Leader"
+      }
+    ],
+    "firstBlood": {
+      "player": "Chris",
+      "commander": "Araumi of the Dead Tide"
+    }
   }
 ]
