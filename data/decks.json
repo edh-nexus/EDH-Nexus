@@ -125,6 +125,15 @@
   },
   {
     "player": "Kyle",
+    "commander1": "Aragorn, the Uniter",
+    "commander2": "None",
+    "colorIdentity": "WURG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/e/9/e98d5321-ec09-456c-a9ea-c8ca2cfc6205.webp?1783916262",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Kyle",
     "commander1": "Pantlaza, Sun-Favored",
     "commander2": "None",
     "colorIdentity": "WRG",
