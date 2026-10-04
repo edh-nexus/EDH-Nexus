@@ -198,5 +198,37 @@
       "player": "Kyle",
       "commander": "Anim Pakal, Thousandth Moon"
     }
+  },
+  {
+    "gameId": "GAME_1791087896283",
+    "date": "2026-10-04",
+    "players": [
+      {
+        "player": "Kyle",
+        "commander": "Finneas, Ace Archer",
+        "position": 1,
+        "kills": 2
+      },
+      {
+        "player": "Zack",
+        "commander": "Talrand, Sky Summoner",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Finneas, Ace Archer"
+      },
+      {
+        "player": "Chris",
+        "commander": "Vadrok, Apex of Thunder",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Finneas, Ace Archer"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Finneas, Ace Archer"
+    }
   }
 ]
