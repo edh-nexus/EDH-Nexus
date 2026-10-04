@@ -251,6 +251,15 @@
   },
   {
     "player": "Zack",
+    "commander1": "Esix, Fractal Bloom",
+    "commander2": "None",
+    "colorIdentity": "UG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/2/e/2e390f8e-1dd5-4383-83f5-45f20f18d410.webp?1783912979",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Zack",
     "commander1": "Miirym, Sentinel Wyrm",
     "commander2": "None",
     "colorIdentity": "URG",
