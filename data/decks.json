@@ -125,6 +125,15 @@
   },
   {
     "player": "Kyle",
+    "commander1": "Anim Pakal, Thousandth Moon",
+    "commander2": "None",
+    "colorIdentity": "WR",
+    "artUrl1": "https://cards.scryfall.io/grid/front/7/f/7fc97d16-c54c-4a2b-9691-39e8a41c7777.webp?1783913707",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Kyle",
     "commander1": "Aragorn, the Uniter",
     "commander2": "None",
     "colorIdentity": "WURG",
