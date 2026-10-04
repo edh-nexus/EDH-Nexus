@@ -275,5 +275,14 @@
     "artUrl1": "https://cards.scryfall.io/grid/front/e/e/ee64d0dd-e3d8-4abc-b9d6-b19c505fbfa1.webp?1783903300",
     "artUrl2": "",
     "decklistUrl": ""
+  },
+  {
+    "player": "Zack",
+    "commander1": "Talrand, Sky Summoner",
+    "commander2": "None",
+    "colorIdentity": "U",
+    "artUrl1": "https://cards.scryfall.io/grid/front/9/f/9f4e8d4c-79f8-4313-bdb4-2062d8f5299b.webp?1783927560",
+    "artUrl2": "",
+    "decklistUrl": ""
   }
 ]
