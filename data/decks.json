@@ -27,6 +27,15 @@
   },
   {
     "player": "Chris",
+    "commander1": "Araumi of the Dead Tide",
+    "commander2": "None",
+    "colorIdentity": "UB",
+    "artUrl1": "https://cards.scryfall.io/grid/front/4/8/48b597dd-f6eb-45da-977d-453e8c1433cc.webp?1783928779",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Chris",
     "commander1": "Greensleeves, Maro-Sorcerer",
     "commander2": "None",
     "colorIdentity": "G",
