@@ -143,6 +143,15 @@
   },
   {
     "player": "Kyle",
+    "commander1": "Finneas, Ace Archer",
+    "commander2": "None",
+    "colorIdentity": "WG",
+    "artUrl1": "https://cards.scryfall.io/grid/front/e/7/e77374ac-3456-48a3-a412-4474547d437c.webp?1783910760",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Kyle",
     "commander1": "Pantlaza, Sun-Favored",
     "commander2": "None",
     "colorIdentity": "WRG",
