@@ -102,5 +102,37 @@
       "player": "Chris",
       "commander": "Araumi of the Dead Tide"
     }
+  },
+  {
+    "gameId": "GAME_1791076317525",
+    "date": "2026-10-04",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Mogis, God of Slaughter",
+        "position": 1,
+        "kills": 2
+      },
+      {
+        "player": "Kyle",
+        "commander": "Thranduil, the Elvenking",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Mogis, God of Slaughter"
+      },
+      {
+        "player": "Zack",
+        "commander": "Miirym, Sentinel Wyrm",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Mogis, God of Slaughter"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Thranduil, the Elvenking"
+    }
   }
 ]
