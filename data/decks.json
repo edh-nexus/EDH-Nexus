@@ -18,6 +18,15 @@
   },
   {
     "player": "Ashton",
+    "commander1": "Man-Thing, Marsh Protector",
+    "commander2": "None",
+    "colorIdentity": "G",
+    "artUrl1": "https://cards.scryfall.io/grid/front/a/6/a68c3a2d-d81f-48b7-9af8-8e83590fd19a.webp?1788258417",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Ashton",
     "commander1": "Umbris, Fear Manifest",
     "commander2": "None",
     "colorIdentity": "UB",
