@@ -161,6 +161,15 @@
   },
   {
     "player": "Kyle",
+    "commander1": "Giada, Font of Hope",
+    "commander2": "None",
+    "colorIdentity": "W",
+    "artUrl1": "https://cards.scryfall.io/grid/front/4/e/4ebc7622-08a1-4f43-92dd-8675d395e8f6.webp?1789752341",
+    "artUrl2": "",
+    "decklistUrl": ""
+  },
+  {
+    "player": "Kyle",
     "commander1": "Pantlaza, Sun-Favored",
     "commander2": "None",
     "colorIdentity": "WRG",
