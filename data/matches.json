@@ -270,5 +270,45 @@
       "player": "Ashton",
       "commander": "Man-Thing, Marsh Protector"
     }
+  },
+  {
+    "gameId": "GAME_1791603484597",
+    "date": "2026-10-09",
+    "players": [
+      {
+        "player": "Ashton",
+        "commander": "Man-Thing, Marsh Protector",
+        "position": 1,
+        "kills": 3
+      },
+      {
+        "player": "Chris",
+        "commander": "Xyris, the Writhing Storm",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Ashton",
+        "killedByCommander": "Man-Thing, Marsh Protector"
+      },
+      {
+        "player": "Kyle",
+        "commander": "Pantlaza, Sun-Favored",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Ashton",
+        "killedByCommander": "Man-Thing, Marsh Protector"
+      },
+      {
+        "player": "Zack",
+        "commander": "Elsha, Threefold Master",
+        "position": 4,
+        "kills": 0,
+        "killedBy": "Ashton",
+        "killedByCommander": "Man-Thing, Marsh Protector"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Pantlaza, Sun-Favored"
+    }
   }
 ]
