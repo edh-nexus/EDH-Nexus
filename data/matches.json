@@ -230,5 +230,45 @@
       "player": "Kyle",
       "commander": "Finneas, Ace Archer"
     }
+  },
+  {
+    "gameId": "GAME_1791600095633",
+    "date": "2026-10-09",
+    "players": [
+      {
+        "player": "Chris",
+        "commander": "Jinnie Fay, Jetmir's Second",
+        "position": 1,
+        "kills": 3
+      },
+      {
+        "player": "Zack",
+        "commander": "Captain America, Team Leader",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Jinnie Fay, Jetmir's Second"
+      },
+      {
+        "player": "Kyle",
+        "commander": "Giada, Font of Hope",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Jinnie Fay, Jetmir's Second"
+      },
+      {
+        "player": "Ashton",
+        "commander": "Man-Thing, Marsh Protector",
+        "position": 4,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Jinnie Fay, Jetmir's Second"
+      }
+    ],
+    "firstBlood": {
+      "player": "Kyle",
+      "commander": "Giada, Font of Hope"
+    }
   }
 ]
