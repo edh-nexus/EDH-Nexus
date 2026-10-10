@@ -242,17 +242,9 @@
         "kills": 3
       },
       {
-        "player": "Zack",
-        "commander": "Captain America, Team Leader",
-        "position": 2,
-        "kills": 0,
-        "killedBy": "Chris",
-        "killedByCommander": "Jinnie Fay, Jetmir's Second"
-      },
-      {
         "player": "Kyle",
         "commander": "Giada, Font of Hope",
-        "position": 3,
+        "position": 2,
         "kills": 0,
         "killedBy": "Chris",
         "killedByCommander": "Jinnie Fay, Jetmir's Second"
@@ -260,6 +252,14 @@
       {
         "player": "Ashton",
         "commander": "Man-Thing, Marsh Protector",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Chris",
+        "killedByCommander": "Jinnie Fay, Jetmir's Second"
+      },
+      {
+        "player": "Zack",
+        "commander": "Captain America, Team Leader",
         "position": 4,
         "kills": 0,
         "killedBy": "Chris",
@@ -267,8 +267,8 @@
       }
     ],
     "firstBlood": {
-      "player": "Kyle",
-      "commander": "Giada, Font of Hope"
+      "player": "Ashton",
+      "commander": "Man-Thing, Marsh Protector"
     }
   }
 ]
