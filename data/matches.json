@@ -310,5 +310,45 @@
       "player": "Kyle",
       "commander": "Pantlaza, Sun-Favored"
     }
+  },
+  {
+    "gameId": "GAME_1791607020836",
+    "date": "2026-10-09",
+    "players": [
+      {
+        "player": "Kyle",
+        "commander": "Anim Pakal, Thousandth Moon",
+        "position": 1,
+        "kills": 3
+      },
+      {
+        "player": "Chris",
+        "commander": "Araumi of the Dead Tide",
+        "position": 2,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Anim Pakal, Thousandth Moon"
+      },
+      {
+        "player": "Zack",
+        "commander": "Elsha, Threefold Master",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Anim Pakal, Thousandth Moon"
+      },
+      {
+        "player": "Ashton",
+        "commander": "Man-Thing, Marsh Protector",
+        "position": 4,
+        "kills": 0,
+        "killedBy": "Kyle",
+        "killedByCommander": "Anim Pakal, Thousandth Moon"
+      }
+    ],
+    "firstBlood": {
+      "player": "Chris",
+      "commander": "Araumi of the Dead Tide"
+    }
   }
 ]
