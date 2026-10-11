@@ -350,5 +350,45 @@
       "player": "Chris",
       "commander": "Araumi of the Dead Tide"
     }
+  },
+  {
+    "gameId": "GAME_1791688849076",
+    "date": "2026-10-10",
+    "players": [
+      {
+        "player": "Zack",
+        "commander": "Captain America, Team Leader",
+        "position": 1,
+        "kills": 2
+      },
+      {
+        "player": "Alexander",
+        "commander": "Tidus, Yuna's Guardian",
+        "position": 2,
+        "kills": 1,
+        "killedBy": "Zack",
+        "killedByCommander": "Captain America, Team Leader"
+      },
+      {
+        "player": "Chris",
+        "commander": "Kenrith, the Returned King",
+        "position": 3,
+        "kills": 0,
+        "killedBy": "Alexander",
+        "killedByCommander": "Tidus, Yuna's Guardian"
+      },
+      {
+        "player": "Ashton",
+        "commander": "Man-Thing, Marsh Protector",
+        "position": 4,
+        "kills": 0,
+        "killedBy": "Zack",
+        "killedByCommander": "Captain America, Team Leader"
+      }
+    ],
+    "firstBlood": {
+      "player": "Ashton",
+      "commander": "Man-Thing, Marsh Protector"
+    }
   }
 ]
